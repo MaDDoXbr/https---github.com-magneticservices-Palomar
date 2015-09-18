@@ -90,14 +90,15 @@ public class LineMesh : MonoBehaviour {
 			DrawLine();
 	}
 
-	public void DrawLine() {
+	public void DrawLine() 
+	{
 	    if (Points.Length < 2) return;
 		SplitQuads = new List<Vector3[]>();
 		SourceSlices = new List<Slice2D>();
         PolyLine = new List<Vector3>();
 
 	    // Adjusted Points - trimmed (TODO) then scaled
-	    var adjPoints = AdjustPoints(Points);
+	    var adjPoints = AdjustPoints(Points, FillAmount);
 		adjPoints = OffsetPoints(adjPoints, Offset);
 
 		// Initialize the separate quads
@@ -140,16 +141,16 @@ public class LineMesh : MonoBehaviour {
 		return ofsPoints;
 	}
 
-	private Vector3[] AdjustPoints(Vector3[] points) {
+	private Vector3[] AdjustPoints(Vector3[] points, float completion) {
         var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
-        var unfilled = FillAmount < 1f;
-        if (!unfilled && !changedScale) 
+        var incomplete = completion < 1f;
+        if (!incomplete && !changedScale) 
             return points;
         // Make a flat clone of the original array
         var adjPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
         Array.Copy(points, adjPoints, points.Length);
-        if (unfilled) {
-            adjPoints = AdjustFill(points, adjPoints);
+        if (incomplete) {
+            adjPoints = AdjustCompletion(points, adjPoints, completion);
         }
         if (changedScale) {
             for (int i = 0; i < adjPoints.Length; i++) {
@@ -161,41 +162,95 @@ public class LineMesh : MonoBehaviour {
       return adjPoints;
     }
 
-	private Vector3[] AdjustFill(Vector3[] points, Vector3[] adjPoints) {
+	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion) 
+	{
 		//TODO: Vertical fill
-		var minX = adjPoints[0].x;
-		var maxX = adjPoints[adjPoints.Length - 1].x;
-		var maxXtoShow = Mathf.Lerp(minX, maxX, FillAmount);
-		Debug.Log("Max X to show:" + maxXtoShow);
-		float lastValidX = minX;
+		return GetMidPoint(points, adjPoints, completion);
+		var firstX = adjPoints[0].x;
+		var lastX = adjPoints[adjPoints.Length - 1].x;
+		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
+		Debug.Log("X coord of cap point:" + maxXtoShow);
+		float lastWholeX = firstX;
 		int capIdx = 0;
-		// If projected last value = last value in the list, set it straight
-		if (Mathf.Approximately(maxX, maxXtoShow)) {
+		bool exactLastPoint = Mathf.Approximately(maxXtoShow, lastWholeX);
+		// If last x to show = last value in the list, just assign it
+		if (exactLastPoint) {
 			capIdx = adjPoints.Length;
-			lastValidX = maxX;
+			lastWholeX = lastX;
 		} else {
-			for (int i = 2; i < adjPoints.Length - 1; i++) {
+			//capIdx = adjPoints.Length - 1;
+			for (int i = 0; i < adjPoints.Length; i++) {
 				if (adjPoints[i].x <= maxXtoShow) {
-					lastValidX = adjPoints[i].x;
+					lastWholeX = adjPoints[i].x;
 				} else {
 					capIdx = i;
 					break;
 				}
 			}
 		}
-		Debug.Log("Last valid x: " + lastValidX + "   Cap Idx: " + capIdx);
+		Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
 		// Remove remaining points, leaving room for the end cap
 		// Only leaves room when the last x is not exactly the last valid x
-		int trailPoints = (Mathf.Approximately(maxXtoShow, lastValidX)) ? 0 : 1;
+		int trailPoints = exactLastPoint ? 0 : 1;
 		bool hasTrailPoint = (trailPoints == 1);
 		adjPoints = Enumerable.Repeat(Vector3.zero, capIdx+trailPoints).ToArray();
+		// First copy all original "whole" points, then add the trail point if needed
 		Array.Copy(points, adjPoints, capIdx);
+		if (hasTrailPoint)
+			adjPoints = AddTrailPoint(	adjPoints, points[capIdx], 
+										points[capIdx + 1], maxXtoShow	);
+		return adjPoints;
+	}
+
+	// Temporary, for just 2 points
+	private Vector3[] GetMidPoint(Vector3[] points, Vector3[] adjPoints, float completion)
+	{
+		var firstX = adjPoints[0].x;
+		var lastX = adjPoints[1].x;
+		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
+		var currentPoint = adjPoints[0];
+		var nextPoint = adjPoints[1];
+		Debug.Log("X coord of max point:" + maxXtoShow);
+		float lastWholeX = firstX;
+		int capIdx = 0;
+		//Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
+		int trailPoints = 1;
+		adjPoints = Enumerable.Repeat(Vector3.zero, capIdx + trailPoints + 1).ToArray(); // 2 elements
+
+		Array.Copy(points, adjPoints, capIdx+1); //1
+		// Add trail point
+		var arraysize = adjPoints.Length;
+
+		// We need a percentage t from the current to the next point
+		var t = Mathf.InverseLerp(currentPoint.x, nextPoint.x, maxXtoShow);
+		adjPoints[arraysize - 1] = Vector3.Lerp(currentPoint, nextPoint, t);
+
+		return adjPoints;
+	}
+
+	// find the next point FillValue, get the avg t from the current and next 't's
+	private Vector3[] AddTrailPoint(Vector3[] adjPoints, 
+									Vector3 currentPoint, Vector3 nextPoint, 
+									float xToShow) 
+	{
+		var arraysize = adjPoints.Length;
+		var vectorMag = (nextPoint - adjPoints[arraysize - 1]).magnitude;
+		var vectorDir = (nextPoint - adjPoints[arraysize - 1]).normalized;
+		
+		//var t = Mathf.InverseLerp(currentPoint.x, nextPoint.x, thisX);
+
+		// We need a percentage t from the current to the next point
+		var t = Mathf.Lerp(currentPoint.x, nextPoint.x, xToShow);
+		adjPoints[arraysize - 1] = vectorDir * (vectorMag * t);
 		return adjPoints;
 	}
 
 	// Initial and last slices are the same as in the split quads, others are averaged
-	List<Slice2D> SetAveragedSlices (List<Slice2D> source)
-	{
+	List<Slice2D> SetAveragedSlices (List<Slice2D> source) {
+		if (source.Count < 2) {
+			Debug.Log("Error: Empty list of slices");
+			return null;
+		}
 	    var NewSlices = new List<Slice2D>();
 		NewSlices.Add (source [0]);
 		for (int i = 1; i < source.Count - 1; i=i+2) {
