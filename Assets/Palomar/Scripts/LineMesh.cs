@@ -165,83 +165,80 @@ public class LineMesh : MonoBehaviour {
 	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion) 
 	{
 		//TODO: Vertical fill
-		return GetMidPoint(points, adjPoints, completion);
+		//test: return GetMidPoint(points, adjPoints, completion);
 		var firstX = adjPoints[0].x;
 		var lastX = adjPoints[adjPoints.Length - 1].x;
-		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
-		Debug.Log("X coord of cap point:" + maxXtoShow);
-		float lastWholeX = firstX;
-		int capIdx = 0;
-		bool exactLastPoint = Mathf.Approximately(maxXtoShow, lastWholeX);
-		// If last x to show = last value in the list, just assign it
+		var xToShow = Mathf.Lerp(firstX, lastX, completion);
+		Debug.Log("X coord of cap point:" + xToShow);
+		float prevSourceX = firstX;				// only for debug purposes and to detect if the last point is exact
+		int capIdx = 0;									// that's what does the magic
+		bool exactLastPoint = Mathf.Approximately(xToShow, prevSourceX);
+		// If last x to show == last value in the list, just assign it
 		if (exactLastPoint) {
-			capIdx = adjPoints.Length;
-			lastWholeX = lastX;
+			capIdx = adjPoints.Length;		
+			prevSourceX = lastX;
 		} else {
-			//capIdx = adjPoints.Length - 1;
 			for (int i = 0; i < adjPoints.Length; i++) {
-				if (adjPoints[i].x <= maxXtoShow) {
-					lastWholeX = adjPoints[i].x;
+				if (adjPoints[i].x <= xToShow) {
+					prevSourceX = adjPoints[i].x;
 				} else {
-					capIdx = i;
+					capIdx = i - 1;
 					break;
 				}
 			}
 		}
-		Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
+		//Debug.Log("Last 'source' x: " + prevSourceX + "   Cap Idx: " + capIdx);
 		// Remove remaining points, leaving room for the end cap
 		// Only leaves room when the last x is not exactly the last valid x
 		int trailPoints = exactLastPoint ? 0 : 1;
-		bool hasTrailPoint = (trailPoints == 1);
-		adjPoints = Enumerable.Repeat(Vector3.zero, capIdx+trailPoints).ToArray();
+		adjPoints = Enumerable.Repeat (Vector3.zero, capIdx + trailPoints + 1).ToArray();
 		// First copy all original "whole" points, then add the trail point if needed
-		Array.Copy(points, adjPoints, capIdx);
-		if (hasTrailPoint)
-			adjPoints = AddTrailPoint(	adjPoints, points[capIdx], 
-										points[capIdx + 1], maxXtoShow	);
+		try { 
+			Array.Copy (points, adjPoints, capIdx + 1);
+		} catch (Exception) {
+			Debug.Log(" Broken capIdx: "+capIdx);
+			throw;
+		}
+		if (!exactLastPoint)
+			adjPoints = AddTrailPoint (adjPoints, points[capIdx], 
+										points[capIdx + 1], xToShow	);
 		return adjPoints;
 	}
 
 	// Temporary, for just 2 points
-	private Vector3[] GetMidPoint(Vector3[] points, Vector3[] adjPoints, float completion)
-	{
-		var firstX = adjPoints[0].x;
-		var lastX = adjPoints[1].x;
-		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
-		var currentPoint = adjPoints[0];
-		var nextPoint = adjPoints[1];
-		Debug.Log("X coord of max point:" + maxXtoShow);
-		float lastWholeX = firstX;
-		int capIdx = 0;
-		//Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
-		int trailPoints = 1;
-		adjPoints = Enumerable.Repeat(Vector3.zero, capIdx + trailPoints + 1).ToArray(); // 2 elements
+//	private Vector3[] GetMidPoint (Vector3[] points, Vector3[] adjPoints, float completion)
+//	{
+//		var firstX = adjPoints[0].x;
+//		var lastX = adjPoints[1].x;
+//		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
+//		var currentPoint = adjPoints[0];
+//		var nextPoint = adjPoints[1];
+//		Debug.Log("X coord of max point:" + maxXtoShow);
+//		int capIdx = 0;
+//		//Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
+//		int trailPoints = 1;
+//		adjPoints = Enumerable.Repeat (Vector3.zero, capIdx + trailPoints + 1).ToArray (); // 2 elements
+//
+//		Array.Copy(points, adjPoints, capIdx+1); //1
+//		// Add trail point
+//		var arraysize = adjPoints.Length;
+//
+//		// We need a percentage t from the current to the next point
+//		var t = Mathf.InverseLerp (currentPoint.x, nextPoint.x, maxXtoShow);
+//		adjPoints[arraysize - 1] = Vector3.Lerp (currentPoint, nextPoint, t);
+//
+//		return adjPoints;
+//	}
 
-		Array.Copy(points, adjPoints, capIdx+1); //1
-		// Add trail point
-		var arraysize = adjPoints.Length;
-
-		// We need a percentage t from the current to the next point
-		var t = Mathf.InverseLerp(currentPoint.x, nextPoint.x, maxXtoShow);
-		adjPoints[arraysize - 1] = Vector3.Lerp(currentPoint, nextPoint, t);
-
-		return adjPoints;
-	}
-
-	// find the next point FillValue, get the avg t from the current and next 't's
-	private Vector3[] AddTrailPoint(Vector3[] adjPoints, 
+	// Replaces the last element of the array with the proportional trailing point
+	private Vector3[] AddTrailPoint (Vector3[] adjPoints, 
 									Vector3 currentPoint, Vector3 nextPoint, 
 									float xToShow) 
 	{
 		var arraysize = adjPoints.Length;
-		var vectorMag = (nextPoint - adjPoints[arraysize - 1]).magnitude;
-		var vectorDir = (nextPoint - adjPoints[arraysize - 1]).normalized;
-		
-		//var t = Mathf.InverseLerp(currentPoint.x, nextPoint.x, thisX);
-
-		// We need a percentage t from the current to the next point
-		var t = Mathf.Lerp(currentPoint.x, nextPoint.x, xToShow);
-		adjPoints[arraysize - 1] = vectorDir * (vectorMag * t);
+		// We need a percentage t from the current to the next point, considering x
+		var t = Mathf.InverseLerp (currentPoint.x, nextPoint.x, xToShow);
+		adjPoints[arraysize - 1] = Vector3.Lerp (currentPoint, nextPoint, t);
 		return adjPoints;
 	}
 
