@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using System.Collections.Generic;
 
-public enum MeshFillMode { Horizontal, Vertical }
+public enum LineType { Horizontal=0, Vertical }
 
 [ExecuteInEditMode]
 public class LineMesh : MonoBehaviour {
@@ -45,7 +45,7 @@ public class LineMesh : MonoBehaviour {
 	public bool DrawOnStart, Continuous = true, debug;
 	public float Xscale = 1f, Yscale = 1f;
 	public Vector3 Offset;
-	public MeshFillMode FillMode;
+	public LineType FillMode = LineType.Horizontal;
 	private float _fillAmount;
 	public float FillAmount {
 		get { return _fillAmount; }
@@ -120,7 +120,7 @@ public class LineMesh : MonoBehaviour {
         else {
             CreateSplitMesh(ThisMesh, FinalSlices);
         }
-        //ThisMaterial.EnableKeyword("_EMISSION");                    // Unity5 Standard Material Requirement
+        //ThisMaterial.EnableKeyword("_EMISSION");       // Unity5 Standard Material Requirement
 		//"_EmissionColor" 
 		ThisMaterial.SetColor("_Color", LineColor);
 	}
@@ -154,7 +154,7 @@ public class LineMesh : MonoBehaviour {
 	/// <param name="completion"></param>
 	/// <param name="fillMode"></param>
 	/// <returns> Adjusted Points </returns>
-	private Vector3[] AdjustPoints(Vector3[] points, float completion, MeshFillMode fillMode) {
+	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineType fillMode) {
         var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
         var incomplete = completion < 1f;
         if (!incomplete && !changedScale) 
@@ -176,11 +176,11 @@ public class LineMesh : MonoBehaviour {
     }
 
 	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion, 
-										MeshFillMode fillMode) 
+										LineType fillMode) 
 	{
-		var first = (fillMode == MeshFillMode.Horizontal) ? 
+		var first = (fillMode == LineType.Horizontal) ? 
 			adjPoints[0].x : adjPoints[0].y;
-		var last = (fillMode == MeshFillMode.Horizontal) ?
+		var last = (fillMode == LineType.Horizontal) ?
 			adjPoints[adjPoints.Length - 1].x : adjPoints[adjPoints.Length - 1].y;
 		var valToShow = Mathf.Lerp(first, last, completion);
 		//Debug.Log("X coord of cap point:" + valToShow);
@@ -192,7 +192,7 @@ public class LineMesh : MonoBehaviour {
 			capIdx = adjPoints.Length;
 		} else {
 			for (int i = 0; i < adjPoints.Length; i++) {
-				var currVal = (fillMode == MeshFillMode.Horizontal) ? 
+				var currVal = (fillMode == LineType.Horizontal) ? 
 					adjPoints[i].x : adjPoints[i].y;
 				if (currVal > valToShow) {
 					capIdx = i - 1;
@@ -219,12 +219,12 @@ public class LineMesh : MonoBehaviour {
 
 	// Replaces the last element of the array with the proportional trailing point
 	private Vector3[] AddTrailPoint (Vector3[] adjPoints, Vector3 currentPoint, 
-		Vector3 nextPoint, float valToShow, MeshFillMode fillMode) 
+		Vector3 nextPoint, float valToShow, LineType fillMode) 
 	{
 		var arraysize = adjPoints.Length;
-		var currVal = (fillMode == MeshFillMode.Horizontal) ? 
+		var currVal = (fillMode == LineType.Horizontal) ? 
 			currentPoint.x : currentPoint.y;
-		var nextVal = (fillMode == MeshFillMode.Horizontal) ?
+		var nextVal = (fillMode == LineType.Horizontal) ?
 			nextPoint.x : nextPoint.y;
 		// We need a percentage t from the current to the next point, considering x (or y)
 		var t = Mathf.InverseLerp (currVal, nextVal, valToShow);

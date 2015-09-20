@@ -175,7 +175,7 @@ public class gui: Editor {
         return EditorGUILayout.Vector3Field(label, v3, options);
     }
 
-    // Eg.: _lineMesh.FillMode = (MeshFillMode)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
+    // Eg.: _lineMesh.FillMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
     public static Enum EzEnumPopup (string label, Enum enumToShow, float offset = 0f, params GUILayoutOption[] options) {
         AutosetFieldSize(label, offset);
         return EditorGUILayout.EnumPopup(label, enumToShow, options);

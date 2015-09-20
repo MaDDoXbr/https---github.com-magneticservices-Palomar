@@ -31,7 +31,7 @@ public class LineMeshEditor : Editor {
 //
         _lineMesh.DrawOnStart = gui.EzToggle("On Start", _lineMesh.DrawOnStart, GUILayout.Width(75f));
         using (gui.Horizontal()) {
-            _lineMesh.FillMode = (MeshFillMode)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
+            _lineMesh.FillMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
             _lineMesh.FillAmount = gui.EzFloatField("Amount", _lineMesh.FillAmount, 13f);
         }
         using (gui.Horizontal()) {

@@ -11,6 +11,9 @@ public class ParallelLinesEditor : Editor {
         if (_target == null) 
 			_target = target as ParallelLines;
 
+
+		_target.Type = (LineType)gui.EzEnumPopup ("Type", _target.Type, 45f);
+//		gui.LookLikeControls(70f);
 		base.OnInspectorGUI();
 		if (gui.EzButton("Update & Draw"))
 			_target.CreateLines();
