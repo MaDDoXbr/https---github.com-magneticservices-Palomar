@@ -52,7 +52,7 @@ public class LineMesh : MonoBehaviour {
 		set {
 			if (Mathf.Approximately(value, _fillAmount)) 
 				return;
-			_fillAmount = value < 0f ? 0f : value;
+			_fillAmount = Mathf.Clamp01(value);
 			DrawLine();
         }
     }
@@ -93,26 +93,21 @@ public class LineMesh : MonoBehaviour {
 	public void DrawLine() 
 	{
 	    if (Points.Length < 2) return;
+        ThisMesh = new Mesh();
+		if (FillAmount < 0.001f)
+			return;
+
 		SplitQuads = new List<Vector3[]>();
 		SourceSlices = new List<Slice2D>();
         PolyLine = new List<Vector3>();
 
-	    // Adjusted Points - trimmed (TODO) then scaled
-	    var adjPoints = AdjustPoints(Points, FillAmount);
+	    // Adjusted Points are trimmed (fillamount) then scaled
+	    var adjPoints = AdjustPoints(Points, FillAmount, FillMode);
 		adjPoints = OffsetPoints(adjPoints, Offset);
 
-		// Initialize the separate quads
-	    var inc = Continuous ? 1 : 2;
-        for (int i = 0; i < adjPoints.Length - 1; i = i+inc) {
-            var quad = MakeQuad(adjPoints[i], adjPoints[i + 1], LineWidth);
-            SplitQuads.Add(quad);
-			// We use 0, 1, 3, 2 ordering to keep segments aligned relative to +Y
-			SourceSlices.Add (new Slice2D(quad[0], quad[1]));
-			SourceSlices.Add (new Slice2D(quad[3], quad[2]));
-		}
+		InitializeQuads(adjPoints);
 		FinalSlices = Continuous ? SetAveragedSlices (SourceSlices) : SourceSlices;
 
-        ThisMesh = new Mesh();
         // Prepare vertices
         foreach (Slice2D slice in FinalSlices) {
             PolyLine.Add(slice.P1);
@@ -130,6 +125,19 @@ public class LineMesh : MonoBehaviour {
 		ThisMaterial.SetColor("_Color", LineColor);
 	}
 
+	/// <summary> Initialize the separate quads </summary>
+	/// <param name="adjPoints"></param>
+	private void InitializeQuads(Vector3[] adjPoints) {
+		var inc = Continuous ? 1 : 2;
+		for (int i = 0; i < adjPoints.Length - 1; i = i + inc) {
+			var quad = MakeQuad(adjPoints[i], adjPoints[i + 1], LineWidth);
+			SplitQuads.Add(quad);
+			// We use 0, 1, 3, 2 ordering to keep segments aligned relative to +Y
+			SourceSlices.Add(new Slice2D(quad[0], quad[1]));
+			SourceSlices.Add(new Slice2D(quad[3], quad[2]));
+		}
+	}
+
 	private Vector3[] OffsetPoints(Vector3[] points, Vector3 offset) {
 		if (offset.Equals(Vector3.zero)) return points;
 		// Make a flat clone of the original array
@@ -141,7 +149,12 @@ public class LineMesh : MonoBehaviour {
 		return ofsPoints;
 	}
 
-	private Vector3[] AdjustPoints(Vector3[] points, float completion) {
+	/// <summary> Trim points according to 'completion' then Scales them </summary>
+	/// <param name="points"></param>
+	/// <param name="completion"></param>
+	/// <param name="fillMode"></param>
+	/// <returns> Adjusted Points </returns>
+	private Vector3[] AdjustPoints(Vector3[] points, float completion, MeshFillMode fillMode) {
         var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
         var incomplete = completion < 1f;
         if (!incomplete && !changedScale) 
@@ -150,7 +163,7 @@ public class LineMesh : MonoBehaviour {
         var adjPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
         Array.Copy(points, adjPoints, points.Length);
         if (incomplete) {
-            adjPoints = AdjustCompletion(points, adjPoints, completion);
+            adjPoints = AdjustCompletion(points, adjPoints, completion, fillMode);
         }
         if (changedScale) {
             for (int i = 0; i < adjPoints.Length; i++) {
@@ -162,32 +175,31 @@ public class LineMesh : MonoBehaviour {
       return adjPoints;
     }
 
-	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion) 
+	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion, 
+										MeshFillMode fillMode) 
 	{
-		//TODO: Vertical fill
-		//test: return GetMidPoint(points, adjPoints, completion);
-		var firstX = adjPoints[0].x;
-		var lastX = adjPoints[adjPoints.Length - 1].x;
-		var xToShow = Mathf.Lerp(firstX, lastX, completion);
-		Debug.Log("X coord of cap point:" + xToShow);
-		float prevSourceX = firstX;				// only for debug purposes and to detect if the last point is exact
-		int capIdx = 0;									// that's what does the magic
-		bool exactLastPoint = Mathf.Approximately(xToShow, prevSourceX);
+		var first = (fillMode == MeshFillMode.Horizontal) ? 
+			adjPoints[0].x : adjPoints[0].y;
+		var last = (fillMode == MeshFillMode.Horizontal) ?
+			adjPoints[adjPoints.Length - 1].x : adjPoints[adjPoints.Length - 1].y;
+		var valToShow = Mathf.Lerp(first, last, completion);
+		//Debug.Log("X coord of cap point:" + valToShow);
+		float prevSourceVal = first;			// only for debug purposes and to detect if the last point is exact
+		int capIdx = 0;							// that's what does the magic
+		bool exactLastPoint = Mathf.Approximately(valToShow, prevSourceVal);
 		// If last x to show == last value in the list, just assign it
 		if (exactLastPoint) {
-			capIdx = adjPoints.Length;		
-			prevSourceX = lastX;
+			capIdx = adjPoints.Length;
 		} else {
 			for (int i = 0; i < adjPoints.Length; i++) {
-				if (adjPoints[i].x <= xToShow) {
-					prevSourceX = adjPoints[i].x;
-				} else {
+				var currVal = (fillMode == MeshFillMode.Horizontal) ? 
+					adjPoints[i].x : adjPoints[i].y;
+				if (currVal > valToShow) {
 					capIdx = i - 1;
 					break;
 				}
 			}
 		}
-		//Debug.Log("Last 'source' x: " + prevSourceX + "   Cap Idx: " + capIdx);
 		// Remove remaining points, leaving room for the end cap
 		// Only leaves room when the last x is not exactly the last valid x
 		int trailPoints = exactLastPoint ? 0 : 1;
@@ -201,43 +213,21 @@ public class LineMesh : MonoBehaviour {
 		}
 		if (!exactLastPoint)
 			adjPoints = AddTrailPoint (adjPoints, points[capIdx], 
-										points[capIdx + 1], xToShow	);
+										points[capIdx + 1], valToShow, fillMode);
 		return adjPoints;
 	}
 
-	// Temporary, for just 2 points
-//	private Vector3[] GetMidPoint (Vector3[] points, Vector3[] adjPoints, float completion)
-//	{
-//		var firstX = adjPoints[0].x;
-//		var lastX = adjPoints[1].x;
-//		var maxXtoShow = Mathf.Lerp(firstX, lastX, completion);
-//		var currentPoint = adjPoints[0];
-//		var nextPoint = adjPoints[1];
-//		Debug.Log("X coord of max point:" + maxXtoShow);
-//		int capIdx = 0;
-//		//Debug.Log("Last 'whole' x: " + lastWholeX + "   Cap Idx: " + capIdx);
-//		int trailPoints = 1;
-//		adjPoints = Enumerable.Repeat (Vector3.zero, capIdx + trailPoints + 1).ToArray (); // 2 elements
-//
-//		Array.Copy(points, adjPoints, capIdx+1); //1
-//		// Add trail point
-//		var arraysize = adjPoints.Length;
-//
-//		// We need a percentage t from the current to the next point
-//		var t = Mathf.InverseLerp (currentPoint.x, nextPoint.x, maxXtoShow);
-//		adjPoints[arraysize - 1] = Vector3.Lerp (currentPoint, nextPoint, t);
-//
-//		return adjPoints;
-//	}
-
 	// Replaces the last element of the array with the proportional trailing point
-	private Vector3[] AddTrailPoint (Vector3[] adjPoints, 
-									Vector3 currentPoint, Vector3 nextPoint, 
-									float xToShow) 
+	private Vector3[] AddTrailPoint (Vector3[] adjPoints, Vector3 currentPoint, 
+		Vector3 nextPoint, float valToShow, MeshFillMode fillMode) 
 	{
 		var arraysize = adjPoints.Length;
-		// We need a percentage t from the current to the next point, considering x
-		var t = Mathf.InverseLerp (currentPoint.x, nextPoint.x, xToShow);
+		var currVal = (fillMode == MeshFillMode.Horizontal) ? 
+			currentPoint.x : currentPoint.y;
+		var nextVal = (fillMode == MeshFillMode.Horizontal) ?
+			nextPoint.x : nextPoint.y;
+		// We need a percentage t from the current to the next point, considering x (or y)
+		var t = Mathf.InverseLerp (currVal, nextVal, valToShow);
 		adjPoints[arraysize - 1] = Vector3.Lerp (currentPoint, nextPoint, t);
 		return adjPoints;
 	}
