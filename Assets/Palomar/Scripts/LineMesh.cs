@@ -208,7 +208,7 @@ public class LineMesh : MonoBehaviour {
 		try { 
 			Array.Copy (points, adjPoints, capIdx + 1);
 		} catch (Exception) {
-			Debug.Log(" Broken capIdx: "+capIdx);
+			Debug.LogError(" Broken capIdx: "+capIdx);
 			throw;
 		}
 		if (!exactLastPoint)

@@ -114,6 +114,12 @@ public class gui: Editor {
         LookLikeControls(CharSize * label.Length + offset);
     }
 
+	public static int EzIntField (string label, int val, float offset = 0f, params GUILayoutOption[] options)
+	{
+		AutosetFieldSize (label, offset);
+		return EditorGUILayout.IntField (label, val, options);
+	}
+
 	public static float EzFloatField (string label, float val, float offset = 0f, params GUILayoutOption[] options)
     {
         AutosetFieldSize(label, offset);        
