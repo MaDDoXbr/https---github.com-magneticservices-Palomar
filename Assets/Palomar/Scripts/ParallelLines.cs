@@ -28,21 +28,23 @@ public class ParallelLines : MonoBehaviour
 	}
 
 	[HideInInspector]
-	public bool HatLine;
-	public float StartX, EndX, StartY, EndY, OffsetX, OffsetY;
+	public bool HasHat;
+	public float StartX, EndX, StartY, EndY, StepX, StepY;
 	[HideInInspector]
 	public float StartPad, EndPad;
 	public int LineCount;
 
 	public void CreateLines() {
 		DefinePoints();
+		Line.HasHat = HasHat;
+		Line.Continuous = false;
 		Line.DrawLine();
 	}
 
 	private void DefinePoints() {
 		var newPoints = new List<Vector3>();
 		var start = Hor ? StartY : StartX;
-		var offset = Hor ? OffsetY : OffsetX;
+		var offset = Hor ? StepY : StepX;
 
 		for (int i = 0; i < LineCount; i++) {
 			var coord = start + (offset*i);
@@ -53,7 +55,7 @@ public class ParallelLines : MonoBehaviour
 				? new Vector3(EndX, coord, 0f)
 				: new Vector3(coord, EndY, 0f));
 		}
-		if (HatLine) {
+		if (HasHat) {
 			if (!Hor) {
 				newPoints.Add(new Vector3(StartX - StartPad, StartY, 0f));
 				newPoints.Add(new Vector3(StartX+(offset * (LineCount-1))+EndPad,

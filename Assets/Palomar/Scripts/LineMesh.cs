@@ -47,6 +47,8 @@ public class LineMesh : MonoBehaviour {
 	public Vector3 Offset;
 	public LineType FillMode = LineType.Horizontal;
 	private float _fillAmount;
+	public bool HasHat;
+
 	public float FillAmount {
 		get { return _fillAmount; }
 		set {
@@ -102,17 +104,19 @@ public class LineMesh : MonoBehaviour {
         PolyLine = new List<Vector3>();
 
 	    // Adjusted Points are trimmed (fillamount) then scaled
-	    var adjPoints = AdjustPoints(Points, FillAmount, FillMode);
+	    var adjPoints = AdjustPoints(Points, FillAmount, FillMode, HasHat);
 		adjPoints = OffsetPoints(adjPoints, Offset);
 
-		InitializeQuads(adjPoints);
+		SourceSlices = InitializeQuads(adjPoints, SourceSlices);
 		FinalSlices = Continuous ? SetAveragedSlices (SourceSlices) : SourceSlices;
 
         // Prepare vertices
-        foreach (Slice2D slice in FinalSlices) {
-            PolyLine.Add(slice.P1);
-            PolyLine.Add(slice.P2);
-        }
+		for (int index = 0; index < FinalSlices.Count; index++) {
+			//if (HasHat && index == 0) continue;
+			Slice2D slice = FinalSlices[index];
+			PolyLine.Add(slice.P1);
+			PolyLine.Add(slice.P2);
+		}
 		ThisMesh.vertices = PolyLine.ToArray();
 		AssignDefaultUvs (ThisMesh);
         if (Continuous)
@@ -127,15 +131,16 @@ public class LineMesh : MonoBehaviour {
 
 	/// <summary> Initialize the separate quads </summary>
 	/// <param name="adjPoints"></param>
-	private void InitializeQuads(Vector3[] adjPoints) {
+	private List<Slice2D> InitializeQuads(Vector3[] adjPoints, List<Slice2D> source ) {
 		var inc = Continuous ? 1 : 2;
 		for (int i = 0; i < adjPoints.Length - 1; i = i + inc) {
 			var quad = MakeQuad(adjPoints[i], adjPoints[i + 1], LineWidth);
 			SplitQuads.Add(quad);
 			// We use 0, 1, 3, 2 ordering to keep segments aligned relative to +Y
-			SourceSlices.Add(new Slice2D(quad[0], quad[1]));
-			SourceSlices.Add(new Slice2D(quad[3], quad[2]));
+			source.Add(new Slice2D(quad[0], quad[1]));
+			source.Add(new Slice2D(quad[3], quad[2]));
 		}
+		return source;
 	}
 
 	private Vector3[] OffsetPoints(Vector3[] points, Vector3 offset) {
@@ -154,7 +159,7 @@ public class LineMesh : MonoBehaviour {
 	/// <param name="completion"></param>
 	/// <param name="fillMode"></param>
 	/// <returns> Adjusted Points </returns>
-	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineType fillMode) {
+	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineType fillMode, bool hasHat) {
         var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
         var incomplete = completion < 1f;
         if (!incomplete && !changedScale) 
@@ -163,7 +168,7 @@ public class LineMesh : MonoBehaviour {
         var adjPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
         Array.Copy(points, adjPoints, points.Length);
         if (incomplete) {
-            adjPoints = AdjustCompletion(points, adjPoints, completion, fillMode);
+            adjPoints = AdjustCompletion(points, adjPoints, completion, fillMode, hasHat);
         }
         if (changedScale) {
             for (int i = 0; i < adjPoints.Length; i++) {
@@ -176,7 +181,7 @@ public class LineMesh : MonoBehaviour {
     }
 
 	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion, 
-										LineType fillMode) 
+										LineType fillMode, bool hasHat = false) 
 	{
 		var first = (fillMode == LineType.Horizontal) ? 
 			adjPoints[0].x : adjPoints[0].y;
@@ -184,9 +189,9 @@ public class LineMesh : MonoBehaviour {
 			adjPoints[adjPoints.Length - 1].x : adjPoints[adjPoints.Length - 1].y;
 		var valToShow = Mathf.Lerp(first, last, completion);
 		//Debug.Log("X coord of cap point:" + valToShow);
-		float prevSourceVal = first;			// only for debug purposes and to detect if the last point is exact
-		int capIdx = 0;							// that's what does the magic
-		bool exactLastPoint = Mathf.Approximately(valToShow, prevSourceVal);
+		//float prevSourceVal = first;			// only for debug purposes and to detect if the last point is exact
+		int capIdx = 0;								// that's what does the magic
+		bool exactLastPoint = Mathf.Approximately(valToShow, last);
 		// If last x to show == last value in the list, just assign it
 		if (exactLastPoint) {
 			capIdx = adjPoints.Length;
@@ -195,15 +200,17 @@ public class LineMesh : MonoBehaviour {
 				var currVal = (fillMode == LineType.Horizontal) ? 
 					adjPoints[i].x : adjPoints[i].y;
 				if (currVal > valToShow) {
-					capIdx = i - 1;
+					capIdx = Mathf.Max(0, i - 1);	// prevents issue with wrong-typed fill modes
 					break;
 				}
 			}
 		}
+
 		// Remove remaining points, leaving room for the end cap
 		// Only leaves room when the last x is not exactly the last valid x
-		int trailPoints = exactLastPoint ? 0 : 1;
+		int trailPoints = (exactLastPoint || HasHat)? 0 : 1;
 		adjPoints = Enumerable.Repeat (Vector3.zero, capIdx + trailPoints + 1).ToArray();
+
 		// First copy all original "whole" points, then add the trail point if needed
 		try { 
 			Array.Copy (points, adjPoints, capIdx + 1);
@@ -211,9 +218,12 @@ public class LineMesh : MonoBehaviour {
 			Debug.LogError(" Broken capIdx: "+capIdx);
 			throw;
 		}
-		if (!exactLastPoint)
-			adjPoints = AddTrailPoint (adjPoints, points[capIdx], 
-										points[capIdx + 1], valToShow, fillMode);
+		if (hasHat)
+				adjPoints = AddPartialHat (adjPoints, points, completion);
+		else
+			if (!exactLastPoint) {
+				adjPoints = AddTrailPoint(adjPoints, points[capIdx], points[capIdx + 1], valToShow, fillMode);
+			}
 		return adjPoints;
 	}
 
@@ -232,14 +242,24 @@ public class LineMesh : MonoBehaviour {
 		return adjPoints;
 	}
 
+	private Vector3[] AddPartialHat(Vector3[] adjPoints, Vector3[] points, float completion) {
+		adjPoints[adjPoints.Length - 2] = points[points.Length - 2];
+		adjPoints[adjPoints.Length - 1] = Vector3.Lerp (points[points.Length - 2], points[points.Length - 1], completion);
+//		var adjPointsList = adjPoints.ToList();
+//		adjPoints = adjPointsList.ToArray();
+		//Debug.Log (" prevToLast: " + points[points.Length - 2] + "  last: " + points[points.Length - 1]);
+		//Debug.Log (" comp: " + completion + " final: "+ (Vector3.Lerp (points[points.Length - 2],  points[points.Length - 1], completion)));
+		return adjPoints;
+	}
+
 	// Initial and last slices are the same as in the split quads, others are averaged
 	List<Slice2D> SetAveragedSlices (List<Slice2D> source) {
 		if (source.Count < 2) {
 			Debug.Log("Error: Empty list of slices");
 			return null;
 		}
-	    var NewSlices = new List<Slice2D>();
-		NewSlices.Add (source [0]);
+	    var newSlices = new List<Slice2D>();
+		newSlices.Add (source [0]);
 		for (int i = 1; i < source.Count - 1; i=i+2) {
 			// That's the average line in connection segments (cross-section slices)
 			var a1 = (source [i].P1 + source [i+1].P1) / 2;
@@ -259,10 +279,10 @@ public class LineMesh : MonoBehaviour {
 			LineLineIntersection (out cornerBot, source [i].P1, botLine, a1, medianLineDir, true);
 			//Debug.Log ("source & intersec: "+a2+ " " + cornerTop);
 			//Debug.Log ("source & intersec: "+a1+ " " + cornerBot);
-			NewSlices.Add (new Slice2D (cornerBot, cornerTop));
+			newSlices.Add (new Slice2D (cornerBot, cornerTop));
 		}
-		NewSlices.Add (source [source.Count - 1]);
-	    return NewSlices;
+		newSlices.Add (source [source.Count - 1]);
+	    return newSlices;
 	}
 
 	// We don't use textures, so for UVs we just assign the xy 2D coords to them
@@ -276,7 +296,6 @@ public class LineMesh : MonoBehaviour {
 		mesh.uv = uvs;
 	}
 
-    //TODO: Check for more elements
     private void CreateSplitMesh(Mesh mesh, List<Slice2D> slices) {
         var sliceCount = slices.Count;
 
@@ -353,7 +372,8 @@ public class LineMesh : MonoBehaviour {
 	}
 
 	[System.Serializable]
-	public class Slice2D {
+	public class Slice2D 
+	{
 		public Slice2D(Vector3 p1, Vector3 p2) {
 			P1 = p1;
 			P2 = p2;
@@ -385,11 +405,11 @@ public class LineMesh : MonoBehaviour {
 		float s = Vector3.Dot(crossVec3and2, crossVec1and2) / crossVec1and2.sqrMagnitude;
 		// Opting out when s <= 1f doesn't work with open angles, nor >= 0f with closed angles
 		//if((s >= 0.0f) /*&& (s <= 1.0f)*/){
-			intersection = linePoint1 + (lineVec1 * s);
-			if (debug) Debug.DrawLine (linePoint2, intersection, Color.green,30f);
-			return true;
-//		} else { 
-//			return false; 
-//		}
+		intersection = linePoint1 + (lineVec1 * s);
+		if (debug) Debug.DrawLine (linePoint2, intersection, Color.green,30f);
+		return true;
+		//} else { 
+		//return false; 
+		//}
 	}
 }

@@ -19,8 +19,8 @@ public class ParallelLinesEditor : Editor {
 			_target.LineCount = gui.EzIntField ("Line Count", _target.LineCount, 10f);
 		}
 		using (gui.Horizontal ()) {
-			_target.HatLine = gui.EzToggle ("Hat Line", _target.HatLine);
-			if (_target.HatLine) {
+			_target.HasHat = gui.EzToggle ("Hat Line", _target.HasHat);
+			if (_target.HasHat) {
 				gui.LookLikeControls(40f,10f);
 				_target.StartPad = gui.EzFloatField("Pad In", _target.StartPad, 10f);
 				_target.EndPad = gui.EzFloatField ("Pad Out", _target.EndPad, 10f);
@@ -35,8 +35,8 @@ public class ParallelLinesEditor : Editor {
 			_target.EndY = gui.EzFloatField ("End Y", _target.EndY, 10f);			
 		}
 		using (gui.Horizontal ()) {
-			_target.OffsetX = gui.EzFloatField ("Offset X", _target.OffsetX, 10f);
-			_target.OffsetY = gui.EzFloatField ("Offset Y", _target.OffsetY, 10f);
+			_target.StepX = gui.EzFloatField ("Step X", _target.StepX, 10f);
+			_target.StepY = gui.EzFloatField ("Step Y", _target.StepY, 10f);
 		}
 
 		//base.OnInspectorGUI();
