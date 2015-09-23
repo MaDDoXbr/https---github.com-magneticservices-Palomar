@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 
@@ -97,9 +98,9 @@ public class gui: Editor {
 			GUILayout.Label("", EditorStyles.label, MaxWidth(pixels), MinWidth(pixels));
 	}
 	
-	public static void EzLabel (string label, float offset = 0f) {
+	public static void EzLabel (string label, float offset = 0f, params GUILayoutOption[] options) {
         AutosetFieldSize(label, offset);
-        GUILayout.Label (label);
+        GUILayout.Label (label, options);
 	}
 
     public static Color EzColorField(string label, Color color, float offset = 0f, params GUILayoutOption[] options)
@@ -169,8 +170,9 @@ public class gui: Editor {
 //	    return EditorGUILayout.ObjectField(label, obj, typeof(T), true);
 //    }
 
-    public static Object EzObjectField<T> (string label, Object obj, float offset, params GUILayoutOption[] options) {
-	    if (obj == null) return null;
+	public static Object EzObjectField<T> (string label, T obj, float offset, params GUILayoutOption[] options) where T: Object
+	{
+	    //if (obj == null) return null;
         AutosetFieldSize(label, offset);        
 	    return EditorGUILayout.ObjectField(label, obj, typeof(T), true, options);
     }
@@ -269,7 +271,7 @@ public class gui: Editor {
 		}
 	}
 
-    public static Vector3[] EzV3Array(string title, Vector3[] array, ref Vector3 newVar, ref bool foldoutFlag)
+    public static Vector3[] EzV3Array(string title, Vector3[] array, ref Vector3 newVar, ref bool foldoutFlag) 
     {
         using (Vertical()) {
             LookLikeControls(110f, 50f);
@@ -303,6 +305,44 @@ public class gui: Editor {
             return array;
         }
     }
+
+	public static T[] EzObjectArray<T> (string title, T[] array, ref T newVar, ref bool foldoutFlag) where T: Object
+	{
+		using (Vertical ()) {
+			LookLikeControls (110f, 50f);
+			var fullTitle = title + " (" + array.Length + "):";
+			foldoutFlag = EzFoldout (fullTitle, foldoutFlag);
+			if (!foldoutFlag)
+				return array;
+
+			using (Horizontal ()) {
+				EzSpacer (5f);
+				using (Vertical ()) {
+					//LookLikeControls(110f, 100f);
+					for (int i = 0; i < array.Length; i++) {
+						using (Horizontal ()) {
+							array[i] = EzObjectField ("", array[i], 0f) as T;
+							if (EzButton (DeleteButton)) {
+								array = array.RemoveAt (i);
+								//break;
+							}
+						}
+					}
+					Separator ();
+					using (Horizontal ()) {
+						LookLikeControls (15f, 10f);
+						EzLabel("+", 0f, GUILayout.MaxWidth(12f));
+						newVar = EzObjectField ("", newVar, 10f) as T;
+					}
+					if (newVar != null) {
+						array = array.Add (newVar);
+						newVar = null;
+					}
+				}
+			}
+			return array;
+		}		
+	}
 }
 
 } //namespace EzEditor

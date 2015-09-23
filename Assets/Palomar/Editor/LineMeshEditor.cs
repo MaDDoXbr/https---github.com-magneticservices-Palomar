@@ -12,23 +12,9 @@ public class LineMeshEditor : Editor {
     private Vector3 newValue;
 
 
-    public override void OnInspectorGUI() {
+    public override void OnInspectorGUI() 
+	{
         if (_lineMesh == null) _lineMesh = target as LineMesh;
-
-        using (gui.Horizontal()) {
-//            using (gui.Vertical()) {
-//                _lineMesh.On = gui.EzToggle("Live", _lineMesh.On);
-//                _lineMesh.Chain.AlignEnd = gui.EzToggle("Rotate End", _lineMesh.Chain.AlignEnd);
-//            }
-//            using (gui.Vertical()) {
-//                _lineMesh.AlwaysUpdate = gui.EzToggle("Always", _lineMesh.AlwaysUpdate);
-//                _lineMesh.CcwBias = gui.EzToggle("CCW Bias", _lineMesh.CcwBias);
-//            }
-        }
-//        _lineMesh.Chain.Target = (Transform)gui.EzObjectField<Transform>("Controller", _lineMesh.Chain.Target);
-//
-//        gui.Separator();
-//
         _lineMesh.DrawOnStart = gui.EzToggle("On Start", _lineMesh.DrawOnStart, GUILayout.Width(75f));
         using (gui.Horizontal()) {
             _lineMesh.FillMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);

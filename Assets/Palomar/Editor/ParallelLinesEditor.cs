@@ -1,11 +1,14 @@
 ﻿using UnityEditor;
 using EzEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 [CustomEditor(typeof (ParallelLines))]
 public class ParallelLinesEditor : Editor {
 
 	private ParallelLines _target;
+	private Text _newMarker = null;
+	private bool _showMarker;
 
 	public override void OnInspectorGUI() {
         if (_target == null) 
@@ -38,6 +41,7 @@ public class ParallelLinesEditor : Editor {
 			_target.StepX = gui.EzFloatField ("Step X", _target.StepX, 10f);
 			_target.StepY = gui.EzFloatField ("Step Y", _target.StepY, 10f);
 		}
+		_target.MarkerTexts = gui.EzObjectArray ("Marker Texts", _target.MarkerTexts, ref _newMarker, ref _showMarker);
 
 		//base.OnInspectorGUI();
 		if (gui.EzButton("Update & Draw"))

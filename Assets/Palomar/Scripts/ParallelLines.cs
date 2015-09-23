@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(LineMesh))]
@@ -33,6 +34,7 @@ public class ParallelLines : MonoBehaviour
 	[HideInInspector]
 	public float StartPad, EndPad;
 	public int LineCount;
+	public Text[] MarkerTexts = new Text[]{};
 
 	public void CreateLines() {
 		DefinePoints();
