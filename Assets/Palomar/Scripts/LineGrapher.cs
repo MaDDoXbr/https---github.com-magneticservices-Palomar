@@ -22,7 +22,7 @@ public class LineGrapher : MonoBehaviour {
 		                          x => BGLines.Img.fillAmount = x, 1, BGLines.WipeDur).
 		              SetEase (BGLines.EaseType));
 //		mySeq.Append (DOTween.To (()=>Ruler.Img.fillAmount, 
-//		            x => Ruler.Img.fillAmount = x, 1, Ruler.WipeDur).
+//		            x => Ruler.Img.fillAmount = x, 1, Ruler.Duration).
 //		            SetEase (Ruler.EaseType));
 		SeqInsert (ref mySeq, Ruler.StartTime, Ruler.Img, Ruler.WipeDur, Ruler.EaseType);
 

@@ -45,16 +45,16 @@ public class LineMesh : MonoBehaviour {
 	public bool DrawOnStart, Continuous = true, debug;
 	public float Xscale = 1f, Yscale = 1f;
 	public Vector3 Offset;
-	public LineType FillMode = LineType.Horizontal;
-	private float _fillAmount;
+	public LineType WipeMode = LineType.Horizontal;
+	private float _wipeAmount;
 	public bool HasHat;
 
-	public float FillAmount {
-		get { return _fillAmount; }
+	public float WipeAmount {
+		get { return _wipeAmount; }
 		set {
-			if (Mathf.Approximately(value, _fillAmount)) 
+			if (Mathf.Approximately(value, _wipeAmount)) 
 				return;
-			_fillAmount = Mathf.Clamp01(value);
+			_wipeAmount = Mathf.Clamp01(value);
 			DrawLine();
         }
     }
@@ -96,7 +96,7 @@ public class LineMesh : MonoBehaviour {
 	{
 	    if (Points.Length < 2) return;
         ThisMesh = new Mesh();
-		if (FillAmount < 0.001f)
+		if (WipeAmount < 0.001f)
 			return;
 
 		SplitQuads = new List<Vector3[]>();
@@ -104,7 +104,7 @@ public class LineMesh : MonoBehaviour {
         PolyLine = new List<Vector3>();
 
 	    // Adjusted Points are trimmed (fillamount) then scaled
-	    var adjPoints = AdjustPoints(Points, FillAmount, FillMode, HasHat);
+	    var adjPoints = AdjustPoints(Points, WipeAmount, WipeMode, HasHat);
 		adjPoints = OffsetPoints(adjPoints, Offset);
 
 		SourceSlices = InitializeQuads(adjPoints, SourceSlices);
@@ -243,6 +243,7 @@ public class LineMesh : MonoBehaviour {
 	}
 
 	private Vector3[] AddPartialHat(Vector3[] adjPoints, Vector3[] points, float completion) {
+		if (adjPoints.Length < 2) return adjPoints;
 		adjPoints[adjPoints.Length - 2] = points[points.Length - 2];
 		adjPoints[adjPoints.Length - 1] = Vector3.Lerp (points[points.Length - 2], points[points.Length - 1], completion);
 //		var adjPointsList = adjPoints.ToList();
@@ -255,8 +256,8 @@ public class LineMesh : MonoBehaviour {
 	// Initial and last slices are the same as in the split quads, others are averaged
 	List<Slice2D> SetAveragedSlices (List<Slice2D> source) {
 		if (source.Count < 2) {
-			Debug.Log("Error: Empty list of slices");
-			return null;
+			Debug.LogError("Error: Empty list of slices");
+			return source;
 		}
 	    var newSlices = new List<Slice2D>();
 		newSlices.Add (source [0]);

@@ -115,8 +115,7 @@ public class gui: Editor {
         LookLikeControls(CharSize * label.Length + offset);
     }
 
-	public static int EzIntField (string label, int val, float offset = 0f, params GUILayoutOption[] options)
-	{
+	public static int EzIntField (string label, int val, float offset = 0f, params GUILayoutOption[] options) {
 		AutosetFieldSize (label, offset);
 		return EditorGUILayout.IntField (label, val, options);
 	}
@@ -183,17 +182,17 @@ public class gui: Editor {
         return EditorGUILayout.Vector3Field(label, v3, options);
     }
 
-    // Eg.: _lineMesh.FillMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
+    // Eg.: _lineMesh.WipeMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.WipeMode);
     public static Enum EzEnumPopup (string label, Enum enumToShow, float offset = 0f, params GUILayoutOption[] options) {
         AutosetFieldSize(label, offset);
         return EditorGUILayout.EnumPopup(label, enumToShow, options);
     }
 
-    public static GameObject EzGameObjectField(string label, GameObject gO, float offset = 0f) {
-		if (gO == null) return null;
-        AutosetFieldSize(label, offset);        
-		return EditorGUILayout.ObjectField(label, gO, typeof(GameObject), true) as GameObject;
-	}
+//    public static GameObject EzGameObjectField(string label, GameObject gO, float offset = 0f) {
+//		if (gO == null) return null;
+//        AutosetFieldSize(label, offset);        
+//		return EditorGUILayout.ObjectField(label, gO, typeof(GameObject), true) as GameObject;
+//	}
 
 	public static GameObject EzGameObjectField(string label, GameObject gO, float offset, params GUILayoutOption[] options) {
         AutosetFieldSize(label, offset);        

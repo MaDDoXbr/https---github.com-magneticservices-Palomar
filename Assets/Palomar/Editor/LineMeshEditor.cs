@@ -17,8 +17,8 @@ public class LineMeshEditor : Editor {
         if (_lineMesh == null) _lineMesh = target as LineMesh;
         _lineMesh.DrawOnStart = gui.EzToggle("On Start", _lineMesh.DrawOnStart, GUILayout.Width(75f));
         using (gui.Horizontal()) {
-            _lineMesh.FillMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.FillMode);
-            _lineMesh.FillAmount = gui.EzFloatField("Amount", _lineMesh.FillAmount, 13f);
+            _lineMesh.WipeMode = (LineType)gui.EzEnumPopup("Wipe Mode", _lineMesh.WipeMode, 20f);
+            _lineMesh.WipeAmount = gui.EzFloatField("%", _lineMesh.WipeAmount, 13f);
         }
         using (gui.Horizontal()) {
             _lineMesh.LineColor = gui.EzColorField("Color", _lineMesh.LineColor, 10f, GUILayout.Width(85f));

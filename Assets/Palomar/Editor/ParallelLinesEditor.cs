@@ -19,7 +19,8 @@ public class ParallelLinesEditor : Editor {
 		using (gui.Horizontal()) {
 			gui.LookLikeControls (40f, 60f);
 			_target.Type = (LineType)gui.EzEnumPopup ("Type", _target.Type, 15f);
-			_target.LineCount = gui.EzIntField ("Line Count", _target.LineCount, 10f);
+			_target.LineCount = gui.EzIntField ("Line Count", _target.LineCount, 10f, GUILayout.Width(100f));
+			_target.WipeAmount = gui.EzFloatField ("%", _target.WipeAmount, 10f, GUILayout.Width (40f));
 		}
 		using (gui.Horizontal ()) {
 			_target.HasHat = gui.EzToggle ("Hat Line", _target.HasHat);

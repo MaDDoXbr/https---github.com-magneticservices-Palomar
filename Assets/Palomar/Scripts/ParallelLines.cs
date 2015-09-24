@@ -8,10 +8,10 @@ public class ParallelLines : MonoBehaviour
 {
 	public LineType Type {
 		get {
-			return (Line.FillMode == LineType.Horizontal) ?
+			return (Line.WipeMode == LineType.Horizontal) ?
 			LineType.Vertical : LineType.Horizontal;
 		} 
-		set { Line.FillMode = (value == LineType.Horizontal) ?
+		set { Line.WipeMode = (value == LineType.Horizontal) ?
 			LineType.Vertical : LineType.Horizontal; }
 	}
 
@@ -35,15 +35,43 @@ public class ParallelLines : MonoBehaviour
 	public float StartPad, EndPad;
 	public int LineCount;
 	public Text[] MarkerTexts = new Text[]{};
+	public float WipeAmount {
+		get { return _line.WipeAmount; }
+		set {
+			if (Mathf.Approximately(_line.WipeAmount, value)) 
+				return;
+			_line.WipeAmount = value;
+			MarkerUpdateCheck();
+		}
+	}
 
-	public void CreateLines() {
+	/// <summary> This function expects evenly spaced, sequential 
+	/// markers. It only considers the first and last MarkerTexts </summary>
+	private void MarkerUpdateCheck() 
+	{
+		var markerCount = MarkerTexts.Length;
+		var currVal = Mathf.Lerp(float.Parse(MarkerTexts[0].text), 
+			float.Parse(MarkerTexts[markerCount - 1].text), WipeAmount);
+			
+		Debug.Log(currVal);
+		//Enable all markers below the current value (val)
+		foreach (var markerText in MarkerTexts) {
+			var thisVal = float.Parse(markerText.text);
+			markerText.enabled = ( thisVal <= currVal &&
+								   WipeAmount > 0.001 );
+		}
+	}
+
+	public void CreateLines() 
+	{
 		DefinePoints();
 		Line.HasHat = HasHat;
 		Line.Continuous = false;
 		Line.DrawLine();
 	}
 
-	private void DefinePoints() {
+	private void DefinePoints() 
+	{
 		var newPoints = new List<Vector3>();
 		var start = Hor ? StartY : StartX;
 		var offset = Hor ? StepY : StepX;
