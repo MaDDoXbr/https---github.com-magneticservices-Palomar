@@ -53,7 +53,6 @@ public class ParallelLines : MonoBehaviour
 		var currVal = Mathf.Lerp(float.Parse(MarkerTexts[0].text), 
 			float.Parse(MarkerTexts[markerCount - 1].text), WipeAmount);
 			
-		Debug.Log(currVal);
 		//Enable all markers below the current value (val)
 		foreach (var markerText in MarkerTexts) {
 			var thisVal = float.Parse(markerText.text);
