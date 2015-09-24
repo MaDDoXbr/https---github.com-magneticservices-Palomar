@@ -38,9 +38,9 @@ public class ParallelLines : MonoBehaviour
 	public float WipeAmount {
 		get { return _line.WipeAmount; }
 		set {
-			if (Mathf.Approximately(_line.WipeAmount, value)) 
+			if (Mathf.Approximately(Line.WipeAmount, value)) 
 				return;
-			_line.WipeAmount = value;
+			Line.WipeAmount = value;
 			MarkerUpdateCheck();
 		}
 	}

@@ -1,55 +1,68 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using System.Collections;
 using DG.Tweening;
 
 public class LineGraph : MonoBehaviour
 {
-	public TextWipeData Subtitle, Subtitle2, Subtitle3;
+	public TextWipeData[] Subtitles;
 	public LineWipeData[] LineWipes;
-	//public LineMesh[] Lines;
+	public RulerWipeData[] RulerWipes;
 
-	void Awake()
+	public void Awake ()
 	{
 		DOTween.Init();
 	}
 	
-	void Start () 
+	public void Start () 
 	{
-		if (!Subtitle.UIText) return;
-
-		Subtitle.UIText.text = "";
-		Subtitle2.UIText.text = "";
-		Subtitle3.UIText.text = "";
-
-		Sequence subtitleSeq = DOTween.Sequence();
-		subtitleSeq.Append(
-			Subtitle.UIText.DOText(Subtitle.finalText, Subtitle.Duration)
-				.SetEase(Subtitle.EaseType)
-		);
-		SeqInsert(ref subtitleSeq, Subtitle2);
-		SeqInsert(ref subtitleSeq, Subtitle3);
-
-		// Lines
-
-		Sequence linesSeq = DOTween.Sequence ();
-		LineWipes[0].Line.WipeAmount = 0f;
-		LineWipes[1].Line.WipeAmount = 0f;
-		LineWipes[2].Line.WipeAmount = 0f;
-
-		SeqInsert(ref linesSeq, LineWipes[0]);
-		SeqInsert (ref linesSeq, LineWipes[1]);
-		SeqInsert (ref linesSeq, LineWipes[2]);
+		WipeSubtitles();
+		WipeLines();
+		WipeRulers();
+	}
 
 
+	private void WipeLines() 
+	{
+		var linesSeq = DOTween.Sequence();
+		foreach (var wipe in LineWipes) {
+			if (wipe == null || wipe.Line == null) 
+				continue;
+			wipe.Line.WipeAmount = 0f;
+			wipe.Line.DrawLine();
+			SeqInsert(ref linesSeq, wipe);
+		}
+	}
+
+	private void WipeRulers() {
+		var rulerSeq = DOTween.Sequence();
+		foreach (var wipe in RulerWipes) {
+			if (wipe == null || wipe.Ruler == null)
+				continue;
+			wipe.Ruler.WipeAmount = 0f;
+			//wipe.Line.DrawLine ();
+			SeqInsert (ref rulerSeq, wipe);
+		}
+	}
+
+	private void WipeSubtitles() 
+	{
+		var subtitleSeq = DOTween.Sequence();
+		foreach (var subtitle in Subtitles) {
+			if (subtitle == null) 
+				continue;
+			subtitle.UIText.text = "";
+			SeqInsert(ref subtitleSeq, subtitle);
+		}
 	}
 
 	public void SeqInsert(ref Sequence seq, TextWipeData wipeData)
 	{
-		seq.Insert(
+		seq.Insert (
 			wipeData.StartTime,
-			wipeData.UIText.DOText(wipeData.finalText, wipeData.Duration)
+			wipeData.UIText.DOText(wipeData.FinalText, wipeData.Duration)
 				.SetEase(wipeData.EaseType)
 		);
 	}
@@ -58,7 +71,19 @@ public class LineGraph : MonoBehaviour
 	{
 		seq.Insert (
 			wipeData.StartTime,
-			DOTween.To (()=>wipeData.Line.WipeAmount, x => wipeData.Line.WipeAmount = x, 
+			DOTween.To (()=>wipeData.Line.WipeAmount, 
+						x => wipeData.Line.WipeAmount = x, 
+						1f, wipeData.Duration).
+						SetEase (wipeData.EaseType)
+		);
+	}
+
+	public void SeqInsert (ref Sequence seq, RulerWipeData wipeData)
+	{
+		seq.Insert (
+			wipeData.StartTime,
+			DOTween.To (() => wipeData.Ruler.WipeAmount,
+						x => wipeData.Ruler.WipeAmount = x,
 						1f, wipeData.Duration).
 						SetEase (wipeData.EaseType)
 		);
@@ -68,7 +93,7 @@ public class LineGraph : MonoBehaviour
 	public class TextWipeData
 	{
 		public Text UIText;
-		public String finalText;
+		public String FinalText;
 		public float StartTime;
 		public float Duration = 0f;
 		public Ease EaseType;
@@ -82,4 +107,14 @@ public class LineGraph : MonoBehaviour
 		public float Duration = 0f;
 		public Ease EaseType;
 	}
+
+	[System.Serializable]
+	public class RulerWipeData
+	{
+		public ParallelLines Ruler;
+		public float StartTime;
+		public float Duration = 0f;
+		public Ease EaseType;
+	}
+
 }
