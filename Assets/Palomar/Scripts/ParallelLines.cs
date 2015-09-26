@@ -6,16 +6,16 @@ using System.Collections.Generic;
 [RequireComponent(typeof(LineMesh))]
 public class ParallelLines : MonoBehaviour
 {
-	public LineType Type {
+	public LineOrientation Type {
 		get {
-			return (Line.WipeMode == LineType.Horizontal) ?
-			LineType.Vertical : LineType.Horizontal;
+			return (Line.WipeMode == LineOrientation.Horizontal) ?
+			LineOrientation.Vertical : LineOrientation.Horizontal;
 		} 
-		set { Line.WipeMode = (value == LineType.Horizontal) ?
-			LineType.Vertical : LineType.Horizontal; }
+		set { Line.WipeMode = (value == LineOrientation.Horizontal) ?
+			LineOrientation.Vertical : LineOrientation.Horizontal; }
 	}
 
-	public bool Hor { get { return Type == LineType.Horizontal; } }
+	public bool Hor { get { return Type == LineOrientation.Horizontal; } }
 	private LineMesh _line;
 	public LineMesh Line {
 		get {

@@ -10,6 +10,7 @@ public class LineGraph : MonoBehaviour
 	public TextWipeData[] Subtitles;
 	public LineWipeData[] LineWipes;
 	public RulerWipeData[] RulerWipes;
+	public BGWipeData BGWipe;
 
 	public void Awake ()
 	{
@@ -21,8 +22,8 @@ public class LineGraph : MonoBehaviour
 		WipeSubtitles();
 		WipeLines();
 		WipeRulers();
+		WipeBG();
 	}
-
 
 	private void WipeLines() 
 	{
@@ -58,6 +59,17 @@ public class LineGraph : MonoBehaviour
 		}
 	}
 
+	private void WipeBG() {
+		BGWipe.Lines.ZeroOutLinesLength();
+		var BgSeq = DOTween.Sequence ();
+
+		for (int i = 0; i < BGWipe.Lines.LineCount - 1; i++) {
+			// only odd elements (line ends) must be tweened
+			if (i%2 != 0)
+				SeqInsert (ref BgSeq, BGWipe, i);
+		}
+	}
+
 	public void SeqInsert(ref Sequence seq, TextWipeData wipeData)
 	{
 		seq.Insert (
@@ -89,6 +101,19 @@ public class LineGraph : MonoBehaviour
 		);
 	}
 
+	public void SeqInsert (ref Sequence seq, BGWipeData wipeData, int i)
+	{
+		seq.Insert (
+			wipeData.StartTime + i*wipeData.StepDelay,
+			DOTween.To (() => wipeData.Lines.Points[i],
+						x => wipeData.Lines.Points[i] = x,
+						wipeData.Lines.FinalPoints[i], wipeData.Duration).
+						SetEase (wipeData.EaseType)
+			// TODO: Everytime points is set, redraw
+			//DOTween.To(()=> myVector, x=> myVector = x, new Vector3(3,4,8), 1);
+		);
+	}
+
 	[System.Serializable]
 	public class TextWipeData
 	{
@@ -114,6 +139,16 @@ public class LineGraph : MonoBehaviour
 		public ParallelLines Ruler;
 		public float StartTime;
 		public float Duration = 0f;
+		public Ease EaseType;
+	}
+
+	[System.Serializable]
+	public class BGWipeData
+	{
+		public MultiLines Lines;
+		public float StartTime;
+		public float Duration = 0f;
+		public float StepDelay = 0f;
 		public Ease EaseType;
 	}
 

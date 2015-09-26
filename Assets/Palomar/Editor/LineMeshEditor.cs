@@ -17,7 +17,7 @@ public class LineMeshEditor : Editor {
         if (_lineMesh == null) _lineMesh = target as LineMesh;
         _lineMesh.DrawOnStart = gui.EzToggle("On Start", _lineMesh.DrawOnStart, GUILayout.Width(75f));
         using (gui.Horizontal()) {
-            _lineMesh.WipeMode = (LineType)gui.EzEnumPopup("Wipe Mode", _lineMesh.WipeMode, 20f);
+            _lineMesh.WipeMode = (LineOrientation)gui.EzEnumPopup("Wipe Mode", _lineMesh.WipeMode, 20f);
             _lineMesh.WipeAmount = gui.EzFloatField("%", _lineMesh.WipeAmount, 13f);
         }
         using (gui.Horizontal()) {

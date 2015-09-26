@@ -57,6 +57,12 @@
     <Reference Include="UnityEngine.Networking">
       <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.Networking">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
@@ -89,6 +95,7 @@
     <Compile Include="Assets\Palomar\Scripts\LineGraph.cs" />
     <Compile Include="Assets\Palomar\Scripts\LineGrapher.cs" />
     <Compile Include="Assets\Palomar\Scripts\LineMesh.cs" />
+    <Compile Include="Assets\Palomar\Scripts\MultiLines.cs" />
     <Compile Include="Assets\Palomar\Scripts\ParallelLines.cs" />
     <Compile Include="Assets\Palomar\Scripts\ScreenCapture.cs" />
     <Compile Include="Assets\Palomar\Scripts\SpriteAssetImporter.cs" />

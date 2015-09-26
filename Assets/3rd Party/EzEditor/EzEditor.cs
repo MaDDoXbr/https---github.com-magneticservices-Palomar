@@ -182,7 +182,7 @@ public class gui: Editor {
         return EditorGUILayout.Vector3Field(label, v3, options);
     }
 
-    // Eg.: _lineMesh.WipeMode = (LineType)gui.EzEnumPopup("Fill Mode", _lineMesh.WipeMode);
+    // Eg.: _lineMesh.WipeMode = (LineOrientation)gui.EzEnumPopup("Fill Mode", _lineMesh.WipeMode);
     public static Enum EzEnumPopup (string label, Enum enumToShow, float offset = 0f, params GUILayoutOption[] options) {
         AutosetFieldSize(label, offset);
         return EditorGUILayout.EnumPopup(label, enumToShow, options);
