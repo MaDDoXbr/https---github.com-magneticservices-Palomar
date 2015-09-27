@@ -46,9 +46,9 @@ public class LineMesh : MonoBehaviour {
 	public float Xscale = 1f, Yscale = 1f;
 	public Vector3 Offset;
 	public LineOrientation WipeMode = LineOrientation.Horizontal;
-	private float _wipeAmount;
 	public bool HasHat;
 
+	[SerializeField]private float _wipeAmount;
 	public float WipeAmount {
 		get { return _wipeAmount; }
 		set {
@@ -215,7 +215,7 @@ public class LineMesh : MonoBehaviour {
 		try { 
 			Array.Copy (points, adjPoints, capIdx + 1);
 		} catch (Exception) {
-			Debug.LogError(" Broken capIdx: "+capIdx);
+			Debug.LogError(" Broken capIdx: "+capIdx+" points: "+points.Length+" adjPoints: "+adjPoints.Length);
 			throw;
 		}
 		if (hasHat)
