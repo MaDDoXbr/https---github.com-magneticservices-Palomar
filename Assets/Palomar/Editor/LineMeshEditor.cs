@@ -11,7 +11,6 @@ public class LineMeshEditor : Editor {
     private Transform _newTransform;
     private Vector3 newValue;
 
-
     public override void OnInspectorGUI() 
 	{
         if (_lineMesh == null) _lineMesh = target as LineMesh;

@@ -11,18 +11,22 @@ public class LineGraph : MonoBehaviour
 	public LineWipeData[] LineWipes;
 	public RulerWipeData[] RulerWipes;
 	public BGWipeData BGWipe;
+	public Transform Pivot;
+	[HideInInspector]public RotationData Rot;
 
 	public void Awake ()
 	{
 		DOTween.Init();
 	}
 	
-	public void Start () 
-	{
+	public void Start () {
+
 		WipeSubtitles();
 		WipeLines();
 		WipeRulers();
 		WipeBG();
+		Pivot.rotation = Quaternion.Euler(Rot.StartRotation);
+		Pivot.DORotate (Rot.EndRotation, Rot.Duration).SetEase (Rot.EaseType);
 	}
 
 	private void WipeLines() 
@@ -155,6 +159,15 @@ public class LineGraph : MonoBehaviour
 		public float Duration = 0f;
 		public float StepDelay = 0f;
 		public Ease EaseType;
+	}
+
+	[Serializable]
+	public class RotationData
+	{
+		public Vector3 StartRotation;
+		public Vector3 EndRotation;
+		public Ease EaseType;
+		public float Duration;
 	}
 
 }

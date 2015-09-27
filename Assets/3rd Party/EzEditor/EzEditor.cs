@@ -25,6 +25,7 @@ public class EzGUI {
 public class gui: Editor {
     public static Texture2D DeleteButton = Resources.Load("deletebutton", typeof(Texture2D)) as Texture2D;
     public static Texture2D AddButton = Resources.Load("addbutton", typeof(Texture2D)) as Texture2D;
+	public static Texture2D LoadValuesButton = Resources.Load ("LoadValues", typeof (Texture2D)) as Texture2D;
 
     private const float CharSize = 6f;
 

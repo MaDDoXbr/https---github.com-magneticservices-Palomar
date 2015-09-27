@@ -213,7 +213,7 @@ public class LineMesh : MonoBehaviour {
 
 		// First copy all original "whole" points, then add the trail point if needed
 		try { 
-			Array.Copy (points, adjPoints, capIdx + 1);
+			Array.Copy (points, adjPoints, Mathf.Min(points.Length, capIdx + 1));
 		} catch (Exception) {
 			Debug.LogError(" Broken capIdx: "+capIdx+" points: "+points.Length+" adjPoints: "+adjPoints.Length);
 			throw;
