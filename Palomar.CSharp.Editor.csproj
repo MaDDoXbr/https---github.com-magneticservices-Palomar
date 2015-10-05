@@ -179,6 +179,7 @@
     <None Include="Assets\3rd Party\DOTween\Editor\DOTweenEditor.XML" />
     <None Include="Assets\3rd Party\DOTween\readme.txt" />
     <None Include="Assets\Depth Mask Example\Shaders\DepthMask.shader" />
+    <None Include="Assets\Palomar\Data\LineGraphTest.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\ReadMe.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\Scripts\Moments\LICENSE.txt" />
     <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />

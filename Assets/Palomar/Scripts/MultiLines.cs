@@ -83,4 +83,8 @@ public class MultiLines : MonoBehaviour
 		Line.DrawLine();
 	}
 
+	public void UpdateAndDraw() {
+		DefinePoints ();
+		DrawLines ();
+	}
 }

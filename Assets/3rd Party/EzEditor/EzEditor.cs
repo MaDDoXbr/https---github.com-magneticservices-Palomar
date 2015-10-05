@@ -211,9 +211,9 @@ public class gui: Editor {
         return GUILayout.Button(texture, GUILayout.ExpandWidth(false), GUILayout.Height(height));
     }
 
-    public static bool EzButton(string text, int height = 16)
+    public static bool EzButton(string text, /*int height = 16,*/ params GUILayoutOption[] options)
     {
-        return GUILayout.Button(text, GUILayout.ExpandWidth(false), GUILayout.Height(height));
+        return GUILayout.Button(text, options /*GUILayout.ExpandWidth(false), GUILayout.Height(height)*/);
     }
 
 	public static bool EzToggle(string label, bool variable) {

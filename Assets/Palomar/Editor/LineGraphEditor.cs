@@ -26,5 +26,8 @@ public class LineGraphEditor : Editor
 			_target.Rot.Duration = gui.EzFloatField ("Duration", _target.Rot.Duration, 10f);
 			_target.Rot.EaseType = (Ease)gui.EzEnumPopup ("Ease", _target.Rot.EaseType, 10f);
 		}
+		if (gui.EzButton("Import XML Data", GUILayout.Height(24f))) {
+			_target.ImportXML();
+		}
 	}
 }

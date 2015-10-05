@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Policy;
 using UnityEngine;
 using System.Collections.Generic;
 
 public enum LineOrientation { Horizontal=0, Vertical }
 
 [ExecuteInEditMode]
-public class LineMesh : MonoBehaviour {
-
+public class LineMesh : MonoBehaviour 
+{
     #region public MeshFilter Mfilter
     MeshFilter _mFilter;
 	public MeshFilter Mfilter { 
@@ -69,7 +70,7 @@ public class LineMesh : MonoBehaviour {
     }
 
 	public void Awake() 
-    {
+	{
 		Mfilter = GetComponent<MeshFilter>();
 	}
 
@@ -131,7 +132,8 @@ public class LineMesh : MonoBehaviour {
 
 	/// <summary> Initialize the separate quads </summary>
 	/// <param name="adjPoints"></param>
-	private List<Slice2D> InitializeQuads(Vector3[] adjPoints, List<Slice2D> source ) {
+	private List<Slice2D> InitializeQuads(Vector3[] adjPoints, List<Slice2D> source ) 
+	{
 		var inc = Continuous ? 1 : 2;
 		for (int i = 0; i < adjPoints.Length - 1; i = i + inc) {
 			var quad = MakeQuad(adjPoints[i], adjPoints[i + 1], LineWidth);
@@ -143,7 +145,8 @@ public class LineMesh : MonoBehaviour {
 		return source;
 	}
 
-	private Vector3[] OffsetPoints(Vector3[] points, Vector3 offset) {
+	private Vector3[] OffsetPoints(Vector3[] points, Vector3 offset) 
+	{
 		if (offset.Equals(Vector3.zero)) return points;
 		// Make a flat clone of the original array
 		var ofsPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
@@ -159,7 +162,8 @@ public class LineMesh : MonoBehaviour {
 	/// <param name="completion"></param>
 	/// <param name="fillMode"></param>
 	/// <returns> Adjusted Points </returns>
-	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineOrientation fillMode, bool hasHat) {
+	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineOrientation fillMode, bool hasHat) 
+	{
         var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
         var incomplete = completion < 1f;
         if (!incomplete && !changedScale) 
@@ -180,7 +184,7 @@ public class LineMesh : MonoBehaviour {
       return adjPoints;
     }
 
-	private Vector3[] AdjustCompletion(Vector3[] points, Vector3[] adjPoints, float completion, 
+	private Vector3[] AdjustCompletion(	Vector3[] points, Vector3[] adjPoints, float completion, 
 										LineOrientation fillMode, bool hasHat = false) 
 	{
 		var first = (fillMode == LineOrientation.Horizontal) ? 
@@ -188,10 +192,12 @@ public class LineMesh : MonoBehaviour {
 		var last = (fillMode == LineOrientation.Horizontal) ?
 			adjPoints[adjPoints.Length - 1].x : adjPoints[adjPoints.Length - 1].y;
 		var valToShow = Mathf.Lerp(first, last, completion);
+		
 		//Debug.Log("X coord of cap point:" + valToShow);
-		//float prevSourceVal = first;			// only for debug purposes and to detect if the last point is exact
+		//float prevSourceVal = first;				// only for debug purposes and to detect if the last point is exact
 		int capIdx = 0;								// that's what does the magic
 		bool exactLastPoint = Mathf.Approximately(valToShow, last);
+		
 		// If last x to show == last value in the list, just assign it
 		if (exactLastPoint) {
 			capIdx = adjPoints.Length;
@@ -213,6 +219,7 @@ public class LineMesh : MonoBehaviour {
 
 		// First copy all original "whole" points, then add the trail point if needed
 		try { 
+			//TODO: Fix the first case, shouldn't leave a trailing Vector3.zero..
 			Array.Copy (points, adjPoints, Mathf.Min(points.Length, capIdx + 1));
 		} catch (Exception) {
 			Debug.LogError(" Broken capIdx: "+capIdx+" points: "+points.Length+" adjPoints: "+adjPoints.Length);
@@ -383,9 +390,11 @@ public class LineMesh : MonoBehaviour {
 		public Vector3 P2;
 	}
 
-	// Calculate the intersection point of two lines. Returns true if lines intersect, otherwise false.
-	// Note that in 3d, two lines do not intersect most of the time. So if the two lines are not in the 
-	// same plane, use ClosestPointsOnTwoLines() instead.
+	/// <summary>
+	/// Calculate the intersection point of two lines. Returns true if lines intersect, otherwise false.
+	/// Note that in 3d, two lines do not intersect most of the time. So if the two lines are not in the 
+	/// same plane, use ClosestPointsOnTwoLines() instead.
+	/// </summary>
 	public static bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1, 
 	                                        Vector3 lineVec1, Vector3 linePoint2, 
 	                                        Vector3 lineVec2, bool debug = false)
@@ -407,7 +416,8 @@ public class LineMesh : MonoBehaviour {
 		// Opting out when s <= 1f doesn't work with open angles, nor >= 0f with closed angles
 		//if((s >= 0.0f) /*&& (s <= 1.0f)*/){
 		intersection = linePoint1 + (lineVec1 * s);
-		if (debug) Debug.DrawLine (linePoint2, intersection, Color.green,30f);
+		if (debug) 
+			Debug.DrawLine(linePoint2, intersection, Color.green, 30f);
 		return true;
 		//} else { 
 		//return false; 

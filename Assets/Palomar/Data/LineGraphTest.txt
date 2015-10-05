@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LineGraph version="1.0" LineCount="3">
+ <verticalRuler stepCount="1" minValue="1" padIn="-10" padOut="10"/>
+ <horizontalRuler stepCount="1" minValue="1" padIn="-10" padOut="10"/>
+ <subtitle1 text="Sera que o Allison fez certo?"/>
+ <subtitle2 text="B"/>
+ <subtitle3 text="C"/>
+ <data>
+   <point x="0" y="20" />
+   <point x="5" y="80" />
+ </data>
+</LineGraph>

@@ -7,6 +7,8 @@ using DG.Tweening;
 
 public class LineGraph : MonoBehaviour
 {
+	public TextAsset XmlAsset;
+	public LineGraphParser Parser; 
 	public TextWipeData[] Subtitles;
 	public LineWipeData[] LineWipes;
 	public RulerWipeData[] RulerWipes;
@@ -19,14 +21,20 @@ public class LineGraph : MonoBehaviour
 		DOTween.Init();
 	}
 	
-	public void Start () {
-
+	public void Start () 
+	{
 		WipeSubtitles();
 		WipeLines();
 		WipeRulers();
 		WipeBG();
 		Pivot.rotation = Quaternion.Euler(Rot.StartRotation);
 		Pivot.DORotate (Rot.EndRotation, Rot.Duration).SetEase (Rot.EaseType);
+	}
+
+	public void ImportXML() {
+		Parser = LineGraphParser.Load(XmlAsset);
+		Debug.Log(Parser.Subtitle1.Text);
+		Debug.Log(Parser.VerticalRuler.StepCount);
 	}
 
 	private void WipeLines() 
@@ -41,7 +49,8 @@ public class LineGraph : MonoBehaviour
 		}
 	}
 
-	private void WipeRulers() {
+	private void WipeRulers() 
+	{
 		var rulerSeq = DOTween.Sequence();
 		foreach (var wipe in RulerWipes) {
 			if (wipe == null || wipe.Ruler == null)
@@ -63,7 +72,8 @@ public class LineGraph : MonoBehaviour
 		}
 	}
 
-	private void WipeBG() {
+	private void WipeBG() 
+	{
 		BGWipe.Lines.DefinePoints();
 		BGWipe.Lines.ZeroOutLinesLength();
 		var BgSeq = DOTween.Sequence ();
