@@ -12,23 +12,24 @@ public class LineGraphParser
     }
 
 	[XmlElement("verticalRuler")]
-	public ParserRuler VerticalRuler;
+    public RulerParser VerticalRuler;
 
 	[XmlElement("horizontalRuler")]
-	public ParserRuler HorizontalRuler;
+    public RulerParser HorizontalRuler;
 
 	[XmlElement("subtitle1")]
-	public ParserSubtitle Subtitle1;
+    public SubtitleParser Subtitle1;
 
 	[XmlElement("subtitle2")]
-	public ParserSubtitle Subtitle2;
+    public SubtitleParser Subtitle2;
 	
 	[XmlElement("subtitle3")]
-	public ParserSubtitle Subtitle3;
+    public SubtitleParser Subtitle3;
 
-	public ParserGraphData Data;
+    [XmlElement("lines")]
+    public LinesParser Lines;
 
-    public class ParserRuler {
+    public class RulerParser {
         [XmlAttribute("stepCount")]
         public int StepCount;
 
@@ -42,26 +43,28 @@ public class LineGraphParser
         public float PadOut;
     }
 
-    public class ParserSubtitle
+    public class SubtitleParser
     {
         [XmlAttribute("text")]
         public string Text;
     }
 
-    public class ParserMultiLines
+    public class LinesParser
     {
         [XmlAttribute("lineCount")]
         public int lineCount;
+
+        [XmlElement("line")]
+        public List<LineParser> lines = new List<LineParser>(); 
     }
 
-    public class ParserGraphData
+    public class LineParser
     {
-        [XmlArray("data")]
-        [XmlArrayItem("point")]
-        public List<ParserDataPoint> points = new List<ParserDataPoint>();
+        [XmlElement("point")]
+        public List<PointParser> points = new List<PointParser>();
     }
 
-    public class ParserDataPoint
+    public class PointParser
     {
         [XmlAttribute("x")]
         public float x;

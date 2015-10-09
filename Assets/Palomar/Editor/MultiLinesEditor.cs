@@ -16,7 +16,7 @@ public class MultiLinesEditor : Editor {
 
 //		using (gui.Horizontal()) {
 //			gui.LookLikeControls (40f, 60f);
-//			_target.Type = (LineOrientation)gui.EzEnumPopup ("Type", _target.Type, 15f);
+//			_target.Along = (LineOrientation)gui.EzEnumPopup ("Along", _target.Along, 15f);
 //			_target.LineCount = gui.EzIntField ("Line Count", _target.LineCount, 10f, GUILayout.Width(100f));
 //			_target.WipeAmount = gui.EzFloatField ("%", _target.WipeAmount, 10f, GUILayout.Width (40f));
 //		}

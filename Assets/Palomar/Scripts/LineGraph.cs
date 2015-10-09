@@ -33,8 +33,16 @@ public class LineGraph : MonoBehaviour
 
 	public void ImportXML() {
 		Parser = LineGraphParser.Load(XmlAsset);
-		Debug.Log(Parser.Subtitle1.Text);
-		Debug.Log(Parser.VerticalRuler.StepCount);
+
+        Subtitles[0].FinalText = Parser.Subtitle1.Text;
+        Subtitles[1].FinalText = Parser.Subtitle2.Text;
+        Subtitles[2].FinalText = Parser.Subtitle3.Text;
+
+        RulerWipes[0].Ruler.StartPad = Parser.HorizontalRuler.PadIn;
+        RulerWipes[0].Ruler.EndPad = Parser.HorizontalRuler.PadOut;
+
+        RulerWipes[1].Ruler.StartPad = Parser.VerticalRuler.PadIn;
+        RulerWipes[1].Ruler.EndPad = Parser.VerticalRuler.PadOut;
 	}
 
 	private void WipeLines() 

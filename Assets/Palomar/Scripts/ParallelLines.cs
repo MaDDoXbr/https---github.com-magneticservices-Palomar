@@ -6,16 +6,16 @@ using System.Collections.Generic;
 [RequireComponent(typeof(LineMesh))]
 public class ParallelLines : MonoBehaviour
 {
-	public LineOrientation Type {
+	public LineOrientation Along {
 		get {
 			return (Line.WipeMode == LineOrientation.Horizontal) ?
-			LineOrientation.Vertical : LineOrientation.Horizontal;
+			LineOrientation.Horizontal : LineOrientation.Vertical;
 		} 
 		set { Line.WipeMode = (value == LineOrientation.Horizontal) ?
-			LineOrientation.Vertical : LineOrientation.Horizontal; }
+			LineOrientation.Horizontal : LineOrientation.Vertical; }
 	}
 
-	public bool Hor { get { return Type == LineOrientation.Horizontal; } }
+	public bool Ver { get { return Along == LineOrientation.Vertical; } }
 	private LineMesh _line;
 	public LineMesh Line {
 		get {
@@ -72,20 +72,20 @@ public class ParallelLines : MonoBehaviour
 	private void DefinePoints() 
 	{
 		var newPoints = new List<Vector3>();
-		var start = Hor ? StartY : StartX;
-		var offset = Hor ? StepY : StepX;
+		var start = Ver ? StartY : StartX;
+		var offset = Ver ? StepY : StepX;
 
 		for (int i = 0; i < LineCount; i++) {
 			var coord = start + (offset*i);
-			newPoints.Add(Hor
+			newPoints.Add(Ver
 				? new Vector3(StartX, coord, 0f)
 				: new Vector3(coord, StartY, 0f));
-			newPoints.Add(Hor
+			newPoints.Add(Ver
 				? new Vector3(EndX, coord, 0f)
 				: new Vector3(coord, EndY, 0f));
 		}
 		if (HasHat) {
-			if (!Hor) {
+			if (!Ver) {
 				newPoints.Add(new Vector3(StartX - StartPad, StartY, 0f));
 				newPoints.Add(new Vector3(StartX+(offset * (LineCount-1))+EndPad,
 					StartY, 0f));

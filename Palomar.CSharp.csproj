@@ -51,11 +51,17 @@
     <Reference Include="UnityEngine">
       <HintPath>Library\UnityAssemblies\UnityEngine.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.Advertisements">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Advertisements.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>Library\UnityAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Networking">
       <HintPath>Library\UnityAssemblies\UnityEngine.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Analytics">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Analytics.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
@@ -93,14 +99,12 @@
     <Compile Include="Assets\3rd Party\EzEditor\EzEditor.cs" />
     <Compile Include="Assets\Depth Mask Example\Scripts\SetRenderQueue.cs" />
     <Compile Include="Assets\Palomar\Scripts\LineGraph.cs" />
-    <Compile Include="Assets\Palomar\Scripts\LineGraphParser.cs" />
     <Compile Include="Assets\Palomar\Scripts\LineGrapher.cs" />
     <Compile Include="Assets\Palomar\Scripts\LineMesh.cs" />
     <Compile Include="Assets\Palomar\Scripts\MultiLines.cs" />
     <Compile Include="Assets\Palomar\Scripts\ParallelLines.cs" />
     <Compile Include="Assets\Palomar\Scripts\ScreenCapture.cs" />
     <Compile Include="Assets\Palomar\Scripts\SpriteAssetImporter.cs" />
-    <Compile Include="Assets\Palomar\Scripts\XML_Importer\Serializer.cs" />
     <Compile Include="Assets\PygmyMonkey\GifCreator\Demo\Scripts\CubeBar.cs" />
     <Compile Include="Assets\PygmyMonkey\GifCreator\Scripts\Moments\Gif\GifEncoder.cs" />
     <Compile Include="Assets\PygmyMonkey\GifCreator\Scripts\Moments\Gif\GifFrame.cs" />
@@ -121,7 +125,6 @@
     <None Include="Assets\3rd Party\DOTween\Editor\DOTweenEditor.XML" />
     <None Include="Assets\3rd Party\DOTween\readme.txt" />
     <None Include="Assets\Depth Mask Example\Shaders\DepthMask.shader" />
-    <None Include="Assets\Palomar\Data\LineGraphTest.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\ReadMe.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\Scripts\Moments\LICENSE.txt" />
     <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />

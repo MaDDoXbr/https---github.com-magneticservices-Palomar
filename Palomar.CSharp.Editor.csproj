@@ -54,6 +54,9 @@
     <Reference Include="UnityEditor">
       <HintPath>Library\UnityAssemblies\UnityEditor.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.Advertisements">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Advertisements.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.Advertisements">
       <HintPath>Library\UnityAssemblies\UnityEditor.Advertisements.dll</HintPath>
     </Reference>
@@ -68,6 +71,9 @@
     </Reference>
     <Reference Include="UnityEditor.Networking">
       <HintPath>Library\UnityAssemblies\UnityEditor.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.Analytics">
+      <HintPath>Library\UnityAssemblies\UnityEngine.Analytics.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.Graphs">
       <HintPath>Library\UnityAssemblies\UnityEditor.Graphs.dll</HintPath>
@@ -179,7 +185,6 @@
     <None Include="Assets\3rd Party\DOTween\Editor\DOTweenEditor.XML" />
     <None Include="Assets\3rd Party\DOTween\readme.txt" />
     <None Include="Assets\Depth Mask Example\Shaders\DepthMask.shader" />
-    <None Include="Assets\Palomar\Data\LineGraphTest.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\ReadMe.txt" />
     <None Include="Assets\PygmyMonkey\GifCreator\Scripts\Moments\LICENSE.txt" />
     <None Include="Assets\Standard Assets\Effects\GlassRefraction\Shaders\GlassStainedBumpDistort.shader" />

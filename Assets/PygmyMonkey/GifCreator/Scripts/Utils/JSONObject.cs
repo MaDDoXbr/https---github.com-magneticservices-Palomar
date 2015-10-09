@@ -86,7 +86,7 @@ public class JSONObject {
 	}
 #else
 	public JSONObject(double d) {
-		type = Type.NUMBER;
+		type = Along.NUMBER;
 		n = d;
 	}
 #endif
@@ -239,13 +239,13 @@ public class JSONObject {
 			if(str.Length > 0) {
 #if UNITY_WP8 || UNITY_WSA
 				if (str == "true") {
-					type = Type.BOOL;
+					type = Along.BOOL;
 					b = true;
 				} else if (str == "false") {
-					type = Type.BOOL;
+					type = Along.BOOL;
 					b = false;
 				} else if (str == "null") {
-					type = Type.NULL;
+					type = Along.NULL;
 #else
 				if(string.Compare(str, "true", true) == 0) {
 					type = Type.BOOL;
@@ -268,13 +268,13 @@ public class JSONObject {
 					n = float.NaN;
 #else
 				} else if(str == INFINITY) {
-					type = Type.NUMBER;
+					type = Along.NUMBER;
 					n = double.PositiveInfinity;
 				} else if(str == NEGINFINITY) {
-					type = Type.NUMBER;
+					type = Along.NUMBER;
 					n = double.NegativeInfinity;
 				} else if(str == NaN) {
-					type = Type.NUMBER;
+					type = Along.NUMBER;
 					n = double.NaN;
 #endif
 				} else if(str[0] == '"') {
@@ -1004,7 +1004,7 @@ public class JSONObject {
 
 	~JSONObject() {
 		if(pool && releaseQueue.Count < MAX_POOL_SIZE) {
-			type = Type.NULL;
+			type = Along.NULL;
 			list = null;
 			keys = null;
 			str = "";
