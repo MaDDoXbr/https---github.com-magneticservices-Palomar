@@ -3,6 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 
 public static class Extensions {
+
+//	public static float InverseLerp(this Vector3 value, Vector3 a, Vector3 b) 
+//	{
+//		var avg = (Mathf.InverseLerp(a.x, b.x, value.x) +
+//			Mathf.InverseLerp(a.y, b.y, value.y)
+////			+ Mathf.InverseLerp(a.z, b.z, value.z) +    <= Currently doesn't account for z
+//			)/2f;
+//		//Debug.Log(avg);
+//		return avg;
+//	}
 	
 	public static Vector3[] ToArray (this IList<Vector3> vertices ) 
     {

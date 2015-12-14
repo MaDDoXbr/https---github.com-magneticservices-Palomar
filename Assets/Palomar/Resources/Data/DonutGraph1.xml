@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DonutGraph version="1.0">
+    <subtitle1
+        text="CIRCLE PIE CHART" color="ffffff"
+        startTime="0.0" duration="3.0"
+        easeType="OutCubic"
+    />
+    <subtitle2
+        text="EASY SET UP. 210 PIE SLICES" color="ffffff"
+        startTime="0.5" duration="3.0"
+        easeType="OutCubic"
+    />
+    <subtitle3
+        text="Source: www.guardian.co.uk" color="ffffff"
+        startTime="2.0" duration="3.0"
+        easeType="OutCubic"
+        posX="357.7"
+    />
+    <rotation
+        in="-8.0 , -62.0 , 0.0"
+        out="0.0 , 0.0 , 0.0"
+        duration="7"
+        easeType="OutExpo"
+    />
+	<slices count="4" duration="2">
+        <slice
+            startTime="0"
+            easeType="OutCubic"
+            finalPercent="15"
+        />
+        <slice
+            startTime="0"
+            easeType="OutCubic"
+            finalPercent="27"
+        />
+        <slice
+            startTime="0"
+            easeType="OutCubic"
+            finalPercent="32"
+        />
+        <slice
+            startTime="0"
+            easeType="OutCubic"
+            finalPercent="26"
+        />
+    </slices>
+</DonutGraph>

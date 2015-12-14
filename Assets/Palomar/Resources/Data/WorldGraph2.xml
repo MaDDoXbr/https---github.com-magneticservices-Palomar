@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Region positions are fixed, circle sizes are defined proportional to the largest value -->
+<!-- Subtitles' Font Size may be omitted, it'll use the previously loaded Font Size for each Subtitle -->
+<WorldGraph version="1.0">
+	<subtitle1 text="WORLD GRAPH CHART 2" size="27"/>
+	<subtitle2 text="DENGUE CASES IN POPULATION" size="28"/>
+	<subtitle3 text="Source: NBC/CNN HK" size="14"/>
+	<rotation 
+		in="-8.8,-67.3,12.6"
+		out="351.2,6.26,-0.5"
+		duration="8"
+		easeType="OutQuint"
+	/>
+    <regions tweenDuration="1" units="thousands">
+        <region value="128.4" startTime="3.0"/>
+        <region value="324.1" startTime="0.1"/>
+        <region value="84.0" startTime="2.0"/>
+        <region value="234.7" startTime="3.5"/>
+        <region value="110.9" startTime="0.5"/>
+        <region value="150.2"  startTime="1"/>
+        <region value="320"   startTime="4.0"/>
+    </regions>
+</WorldGraph>

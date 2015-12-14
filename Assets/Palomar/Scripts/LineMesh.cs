@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Linq;
-using System.Security.Policy;
 using UnityEngine;
 using System.Collections.Generic;
 
-public enum LineOrientation { Horizontal=0, Vertical }
+public enum LineOrientation { Horizontal=0, Vertical, Free }
 
 [ExecuteInEditMode]
+[RequireComponent (typeof (MeshRenderer))]
+[RequireComponent (typeof (MeshFilter))] 
 public class LineMesh : MonoBehaviour 
 {
     #region public MeshFilter Mfilter
@@ -40,14 +41,24 @@ public class LineMesh : MonoBehaviour
 	public List<Vector3[]> SplitQuads;
 	public List<Slice2D> SourceSlices, FinalSlices;
 	// TODO: Points must be ordered in ascending order. Currently it assumes so.
-	public Vector3[] Points;
-	public float LineWidth = 3f;
+	public Vector3[] Points = {};
+	[SerializeField]private float _lineWidth = 3f;
+	public float LineWidth {
+		get {
+			return _lineWidth;
+		}
+		set {
+			if (Mathf.Approximately(_lineWidth, value))
+				return;
+			_lineWidth = value < 0f ? 0f : value;
+			DrawLine ();
+		}
+	}
 	public Color LineColor = Color.magenta;
-	public bool DrawOnStart, Continuous = true, debug;
+	public bool DrawOnStart, Continuous = true, ShowDebug;
 	public float Xscale = 1f, Yscale = 1f;
 	public Vector3 Offset;
 	public LineOrientation WipeMode = LineOrientation.Horizontal;
-	public bool HasHat;
 
 	[SerializeField]private float _wipeAmount;
 	public float WipeAmount {
@@ -105,8 +116,9 @@ public class LineMesh : MonoBehaviour
         PolyLine = new List<Vector3>();
 
 	    // Adjusted Points are trimmed (fillamount) then scaled
-	    var adjPoints = AdjustPoints(Points, WipeAmount, WipeMode, HasHat);
-		adjPoints = OffsetPoints(adjPoints, Offset);
+		var adjPoints = Points.AdjustPoints(WipeAmount, WipeMode, Xscale, Yscale, 
+											ShowDebug)
+											.OffsetPoints(Offset);
 
 		SourceSlices = InitializeQuads(adjPoints, SourceSlices);
 		FinalSlices = Continuous ? SetAveragedSlices (SourceSlices) : SourceSlices;
@@ -119,11 +131,11 @@ public class LineMesh : MonoBehaviour
 			PolyLine.Add(slice.P2);
 		}
 		ThisMesh.vertices = PolyLine.ToArray();
-		AssignDefaultUvs (ThisMesh);
+		MeshTools.AssignDefaultUvs (ThisMesh);
         if (Continuous)
-		    CreateConnectedMesh(ThisMesh, FinalSlices);
+			MeshTools.CreateConnectedMesh (ThisMesh, FinalSlices);
         else {
-            CreateSplitMesh(ThisMesh, FinalSlices);
+			MeshTools.CreateSplitMesh (ThisMesh, FinalSlices);
         }
         //ThisMaterial.EnableKeyword("_EMISSION");       // Unity5 Standard Material Requirement
 		//"_EmissionColor" 
@@ -145,121 +157,6 @@ public class LineMesh : MonoBehaviour
 		return source;
 	}
 
-	private Vector3[] OffsetPoints(Vector3[] points, Vector3 offset) 
-	{
-		if (offset.Equals(Vector3.zero)) return points;
-		// Make a flat clone of the original array
-		var ofsPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
-		Array.Copy(points, ofsPoints, points.Length);
-		for (int i = 0; i < ofsPoints.Length; i++) {
-			ofsPoints[i] = ofsPoints[i] + offset;
-		}
-		return ofsPoints;
-	}
-
-	/// <summary> Trim points according to 'completion' then Scales them </summary>
-	/// <param name="points"></param>
-	/// <param name="completion"></param>
-	/// <param name="fillMode"></param>
-	/// <returns> Adjusted Points </returns>
-	private Vector3[] AdjustPoints(Vector3[] points, float completion, LineOrientation fillMode, bool hasHat) 
-	{
-        var changedScale = !(Mathf.Approximately(Xscale, 1f) && Mathf.Approximately(Yscale, 1f));
-        var incomplete = completion < 1f;
-        if (!incomplete && !changedScale) 
-            return points;
-        // Make a flat clone of the original array
-        var adjPoints = Enumerable.Repeat(Vector3.zero, points.Length).ToArray();
-        Array.Copy(points, adjPoints, points.Length);
-        if (incomplete) {
-            adjPoints = AdjustCompletion(points, adjPoints, completion, fillMode, hasHat);
-        }
-        if (changedScale) {
-            for (int i = 0; i < adjPoints.Length; i++) {
-                adjPoints[i].Set(adjPoints[i].x*Xscale,
-                    adjPoints[i].y*Yscale,
-                    adjPoints[i].z);
-            }
-        }
-      return adjPoints;
-    }
-
-	private Vector3[] AdjustCompletion(	Vector3[] points, Vector3[] adjPoints, float completion, 
-										LineOrientation fillMode, bool hasHat = false) 
-	{
-		var first = (fillMode == LineOrientation.Horizontal) ? 
-			adjPoints[0].x : adjPoints[0].y;
-		var last = (fillMode == LineOrientation.Horizontal) ?
-			adjPoints[adjPoints.Length - 1].x : adjPoints[adjPoints.Length - 1].y;
-		var valToShow = Mathf.Lerp(first, last, completion);
-		
-		//Debug.Log("X coord of cap point:" + valToShow);
-		//float prevSourceVal = first;				// only for debug purposes and to detect if the last point is exact
-		int capIdx = 0;								// that's what does the magic
-		bool exactLastPoint = Mathf.Approximately(valToShow, last);
-		
-		// If last x to show == last value in the list, just assign it
-		if (exactLastPoint) {
-			capIdx = adjPoints.Length;
-		} else {
-			for (int i = 0; i < adjPoints.Length; i++) {
-				var currVal = (fillMode == LineOrientation.Horizontal) ? 
-					adjPoints[i].x : adjPoints[i].y;
-				if (currVal > valToShow) {
-					capIdx = Mathf.Max(0, i - 1);	// prevents issue with wrong-typed fill modes
-					break;
-				}
-			}
-		}
-
-		// Remove remaining points, leaving room for the end cap
-		// Only leaves room when the last x is not exactly the last valid x
-		int trailPoints = (exactLastPoint || HasHat)? 0 : 1;
-		adjPoints = Enumerable.Repeat (Vector3.zero, capIdx + trailPoints + 1).ToArray();
-
-		// First copy all original "whole" points, then add the trail point if needed
-		try { 
-			//TODO: Fix the first case, shouldn't leave a trailing Vector3.zero..
-			Array.Copy (points, adjPoints, Mathf.Min(points.Length, capIdx + 1));
-		} catch (Exception) {
-			Debug.LogError(" Broken capIdx: "+capIdx+" points: "+points.Length+" adjPoints: "+adjPoints.Length);
-			throw;
-		}
-		if (hasHat)
-				adjPoints = AddPartialHat (adjPoints, points, completion);
-		else
-			if (!exactLastPoint) {
-				adjPoints = AddTrailPoint(adjPoints, points[capIdx], points[capIdx + 1], valToShow, fillMode);
-			}
-		return adjPoints;
-	}
-
-	// Replaces the last element of the array with the proportional trailing point
-	private Vector3[] AddTrailPoint (Vector3[] adjPoints, Vector3 currentPoint, 
-		Vector3 nextPoint, float valToShow, LineOrientation fillMode) 
-	{
-		var arraysize = adjPoints.Length;
-		var currVal = (fillMode == LineOrientation.Horizontal) ? 
-			currentPoint.x : currentPoint.y;
-		var nextVal = (fillMode == LineOrientation.Horizontal) ?
-			nextPoint.x : nextPoint.y;
-		// We need a percentage t from the current to the next point, considering x (or y)
-		var t = Mathf.InverseLerp (currVal, nextVal, valToShow);
-		adjPoints[arraysize - 1] = Vector3.Lerp (currentPoint, nextPoint, t);
-		return adjPoints;
-	}
-
-	private Vector3[] AddPartialHat(Vector3[] adjPoints, Vector3[] points, float completion) {
-		if (adjPoints.Length < 2) return adjPoints;
-		adjPoints[adjPoints.Length - 2] = points[points.Length - 2];
-		adjPoints[adjPoints.Length - 1] = Vector3.Lerp (points[points.Length - 2], points[points.Length - 1], completion);
-//		var adjPointsList = adjPoints.ToList();
-//		adjPoints = adjPointsList.ToArray();
-		//Debug.Log (" prevToLast: " + points[points.Length - 2] + "  last: " + points[points.Length - 1]);
-		//Debug.Log (" comp: " + completion + " final: "+ (Vector3.Lerp (points[points.Length - 2],  points[points.Length - 1], completion)));
-		return adjPoints;
-	}
-
 	// Initial and last slices are the same as in the split quads, others are averaged
 	List<Slice2D> SetAveragedSlices (List<Slice2D> source) {
 		if (source.Count < 2) {
@@ -272,7 +169,7 @@ public class LineMesh : MonoBehaviour
 			// That's the average line in connection segments (cross-section slices)
 			var a1 = (source [i].P1 + source [i+1].P1) / 2;
 			var a2 = (source [i].P2 + source [i+1].P2) / 2;
-			if (debug) Debug.DrawLine (a1, a2, Color.blue, 30f);
+			if (ShowDebug) Debug.DrawLine (a1, a2, Color.blue, 30f);
 			var medianLineDir = a2 - a1; 					// point upwards
 
 			var topLine = (source [i].P2 - source [i-1].P2);
@@ -283,79 +180,15 @@ public class LineMesh : MonoBehaviour
 			Vector3 cornerTop, cornerBot;
 			// Now we need to extend the median line to any top line (previous chosen), to get the right angled corner
 			// parms: top line origin, top line direction, median line origin, median line direction
-			LineLineIntersection (out cornerTop, source [i].P2, topLine, a2, medianLineDir, true);
-			LineLineIntersection (out cornerBot, source [i].P1, botLine, a1, medianLineDir, true);
-			//Debug.Log ("source & intersec: "+a2+ " " + cornerTop);
-			//Debug.Log ("source & intersec: "+a1+ " " + cornerBot);
+			Vec3Tools.LineLineIntersection (out cornerTop, source [i].P2, topLine, a2, medianLineDir, true);
+			Vec3Tools.LineLineIntersection (out cornerBot, source[i].P1, botLine, a1, medianLineDir, true);
 			newSlices.Add (new Slice2D (cornerBot, cornerTop));
 		}
 		newSlices.Add (source [source.Count - 1]);
 	    return newSlices;
 	}
 
-	// We don't use textures, so for UVs we just assign the xy 2D coords to them
-	static void AssignDefaultUvs (Mesh mesh)
-	{
-		var vtxCount = mesh.vertices.Length;
-		var uvs = new Vector2[vtxCount];
-		for (var i = 0; i < vtxCount; i++) {
-			uvs [i] = new Vector2 (mesh.vertices [i].x, mesh.vertices [i].y);
-		}
-		mesh.uv = uvs;
-	}
 
-    private void CreateSplitMesh(Mesh mesh, List<Slice2D> slices) {
-        var sliceCount = slices.Count;
-
-        if (sliceCount < 2)
-            return;
-        // Eg.: | | | | | => 5 slices = 8 tris (5 - 1 => 4quads * 2tris/quad = 8), times 3 idx / tri
-        var triIdx = new int[(sliceCount - 1) * 6];
-        // Eg.: 1 3  5 7
-        //      0 2  4 6 ... => 0,1,3, 0,3,2, 4,5,7, 4,7,6
-        int i = 0;
-        // "j" is the Triangle Index
-        // Will repeat the number of quads (slices/2) * 6 (# of "j"s per quad)
-        for (int j = 0; j < (sliceCount * 3); j = j + 6) {
-            triIdx[j] = i;
-            triIdx[j + 1] = i + 1;
-            triIdx[j + 2] = i + 3;
-            triIdx[j + 3] = i;
-            triIdx[j + 4] = i + 3;
-            triIdx[j + 5] = i + 2;
-            //Debug.Log(" j:" + j+" "+(j+1)+" "+(j+2)+" "+(j+3)+" "+(j+4)+" "+(j+5));
-            //Debug.Log(" i:" + i + " " + (i + 1) + " " + (i + 3) + " " + (i) + " " + (i + 3) + " " + (i + 2));
-            i += 4;
-        }
-        mesh.SetTriangles(triIdx, 0);
-        mesh.RecalculateNormals();
-    }
-
-    static void CreateConnectedMesh(Mesh mesh, List<Slice2D> slices)
-    {
-	    var sliceCount = slices.Count;
-
-		if (sliceCount < 2) return;
-		// Eg.: | | | | | => 5 slices = 8 tris (5 - 1 => 4quads * 2tris/quad = 8), times 3 idx / tri
-        var triIdx = new int[(sliceCount - 1) * 6];
-		// Eg.: 1 3  3 5
-		//      0 2  2 4 ... => 0,1,3, 0,3,2, 2,3,4, 2,5,4
-        int i = 0;
-        // J is the Triangle Index
-        // Will repeat the number of quads (slices-1) * 6 (2 tris)
-		for (int j = 0; j < ((sliceCount - 1)*6); j=j+6) {
-			triIdx[j] = i;
-			triIdx[j+1] = i + 1;
-			triIdx[j+2] = i + 3;
-			triIdx[j+3] = i;
-			triIdx[j+4] = i + 3;
-			triIdx[j+5] = i + 2;
-            //Debug.Log(" j:" + j+" "+(j+1)+" "+(j+2)+" "+(j+3)+" "+(j+4)+" "+(j+5));
-		    i += 2;
-		}
-		mesh.SetTriangles (triIdx, 0);
-		mesh.RecalculateNormals ();
-	}
 	
 	Vector3[] MakeQuad(Vector3 begin, Vector3 end, float width) 
 	{
@@ -379,48 +212,4 @@ public class LineMesh : MonoBehaviour
 		return q;
 	}
 
-	[System.Serializable]
-	public class Slice2D 
-	{
-		public Slice2D(Vector3 p1, Vector3 p2) {
-			P1 = p1;
-			P2 = p2;
-		}
-		public Vector3 P1;
-		public Vector3 P2;
-	}
-
-	/// <summary>
-	/// Calculate the intersection point of two lines. Returns true if lines intersect, otherwise false.
-	/// Note that in 3d, two lines do not intersect most of the time. So if the two lines are not in the 
-	/// same plane, use ClosestPointsOnTwoLines() instead.
-	/// </summary>
-	public static bool LineLineIntersection(out Vector3 intersection, Vector3 linePoint1, 
-	                                        Vector3 lineVec1, Vector3 linePoint2, 
-	                                        Vector3 lineVec2, bool debug = false)
-	{
-		intersection = Vector3.zero;
-		
-		Vector3 lineVec3 = linePoint2 - linePoint1;
-		Vector3 crossVec1and2 = Vector3.Cross(lineVec1, lineVec2);
-
-		float planarFactor = Vector3.Dot(lineVec3, crossVec1and2);
-		//Lines are not coplanar. Take into account rounding errors.
-		if((planarFactor >= 0.00001f) || (planarFactor <= -0.00001f)){
-			return false;
-		}
-		Vector3 crossVec3and2 = Vector3.Cross(lineVec3, lineVec2);
-		
-		// Note: sqrMagnitude does x*x+y*y+z*z on the input vector.
-		float s = Vector3.Dot(crossVec3and2, crossVec1and2) / crossVec1and2.sqrMagnitude;
-		// Opting out when s <= 1f doesn't work with open angles, nor >= 0f with closed angles
-		//if((s >= 0.0f) /*&& (s <= 1.0f)*/){
-		intersection = linePoint1 + (lineVec1 * s);
-		if (debug) 
-			Debug.DrawLine(linePoint2, intersection, Color.green, 30f);
-		return true;
-		//} else { 
-		//return false; 
-		//}
-	}
 }

@@ -58,7 +58,8 @@ public class MultiLines : MonoBehaviour
 		}
 	}
 
-	public void ZeroOutLinesLength() {
+	public void ZeroOutLinesLength() 
+	{
 		Points = new List<Vector3> ();
 		var start = Hor ? StartY : StartX;
 		var offset = Hor ? StepY : StepX;
@@ -76,14 +77,14 @@ public class MultiLines : MonoBehaviour
 
 	public void DrawLines() 
 	{
-		Line.HasHat = false;
 		Line.Continuous = false;
 		Line.Points = Points.ToArray();
 		Line.WipeAmount = 1f;	 
 		Line.DrawLine();
 	}
 
-	public void UpdateAndDraw() {
+	public void UpdateAndDraw() 
+	{
 		DefinePoints ();
 		DrawLines ();
 	}

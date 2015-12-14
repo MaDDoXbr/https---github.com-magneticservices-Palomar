@@ -35,7 +35,7 @@ public class LineMeshEditor : Editor {
                 _lineMesh.DrawLine();
             }
             _lineMesh.Continuous = gui.EzToggle("Continuous", _lineMesh.Continuous, GUILayout.Width(85f));
-            _lineMesh.debug = gui.EzToggle("Debug", _lineMesh.debug, GUILayout.Width(75f));
+            _lineMesh.ShowDebug = gui.EzToggle("Debug", _lineMesh.ShowDebug, GUILayout.Width(75f));
         }
 
 //

@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Xml;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 using UnityEngine;
 
@@ -11,65 +10,79 @@ public class LineGraphParser
 		return Serializer<LineGraphParser>.Deserialize (textAsset.text);
     }
 
-	[XmlElement("verticalRuler")]
-    public RulerParser VerticalRuler;
+	public static LineGraphParser Load(WWW xml) {
+		return Serializer<LineGraphParser>.Deserialize (xml.text);
+	}
 
-	[XmlElement("horizontalRuler")]
-    public RulerParser HorizontalRuler;
+    [XmlAttribute("version")]
+    public string Version;
+
+    [XmlAttribute("lineCount")]
+    public int LineCount;
 
 	[XmlElement("subtitle1")]
-    public SubtitleParser Subtitle1;
+    public Parser.Subtitle Subtitle1;
 
 	[XmlElement("subtitle2")]
-    public SubtitleParser Subtitle2;
+	public Parser.Subtitle Subtitle2;
 	
 	[XmlElement("subtitle3")]
-    public SubtitleParser Subtitle3;
+	public Parser.Subtitle Subtitle3;
+
+    [XmlElement("rotation")]
+    public Parser.Rotation Rotation;
+
+    [XmlElement("ruler")]
+    public List<Parser.Ruler> Rulers = new List<Parser.Ruler>();
+
+    [XmlElement("bglines")]
+	public Parser.BGLines BGLines;
 
     [XmlElement("lines")]
     public LinesParser Lines;
 
-    public class RulerParser {
-        [XmlAttribute("stepCount")]
-        public int StepCount;
-
-        [XmlAttribute("minValue")]
-        public float MinValue;
-
-        [XmlAttribute("padIn")]
-        public float PadIn;
-
-        [XmlAttribute("padOut")]
-        public float PadOut;
-    }
-
-    public class SubtitleParser
-    {
-        [XmlAttribute("text")]
-        public string Text;
-    }
-
     public class LinesParser
     {
-        [XmlAttribute("lineCount")]
-        public int lineCount;
-
         [XmlElement("line")]
-        public List<LineParser> lines = new List<LineParser>(); 
+        public List<LineParser> Line = new List<LineParser>();
     }
 
     public class LineParser
     {
+        [XmlAttribute("color")]
+        public string Color;
+
+        [XmlAttribute("startTime")]
+        public float StartTime;
+
+        [XmlAttribute("duration")]
+        public float Duration;
+
+        [XmlAttribute("easeType")]
+        public string EaseType;
+
+	    [XmlAttribute("z")]
+	    public string z;
+
         [XmlElement("point")]
-        public List<PointParser> points = new List<PointParser>();
+        public List<Parser.Point> Points = new List<Parser.Point>();
     }
 
-    public class PointParser
-    {
-        [XmlAttribute("x")]
-        public float x;
+//	/// <summary> This changes for each graph script and idx ; eg.: LineGraph1.xml </summary>
+//	public string GetImportPath (int idx, SceneData data, bool localFile)
+//	{
+//		var urlPath = data.LinePath + idx + ".xml";
+//		string path;
+//
+//		if (localFile) {
+//			if (Application.isEditor)
+//				path = "file://" + Application.dataPath + "/Palomar/" + urlPath;
+//			else
+//				path = "file://" + Application.dataPath + '/' + urlPath;
+//		} else
+//			path = urlPath;
+//
+//		return path;
+//	}
 
-        [XmlAttribute("y")]
-        public float y;
-    }
 }

@@ -22,14 +22,6 @@ public class ParallelLinesEditor : Editor {
 			_target.LineCount = gui.EzIntField ("Line Count", _target.LineCount, 10f, GUILayout.Width(100f));
 			_target.WipeAmount = gui.EzFloatField ("%", _target.WipeAmount, 10f, GUILayout.Width (40f));
 		}
-		using (gui.Horizontal ()) {
-			_target.HasHat = gui.EzToggle ("Hat Line", _target.HasHat);
-			if (_target.HasHat) {
-				gui.LookLikeControls(40f,10f);
-				_target.StartPad = gui.EzFloatField("Pad In", _target.StartPad, 10f);
-				_target.EndPad = gui.EzFloatField ("Pad Out", _target.EndPad, 10f);
-			}
-		}
 		using (gui.Horizontal()) {
 			_target.StartX = gui.EzFloatField ("Start X", _target.StartX, 10f);
 			_target.EndX = gui.EzFloatField ("End X", _target.EndX, 10f);
@@ -42,9 +34,16 @@ public class ParallelLinesEditor : Editor {
 			_target.StepX = gui.EzFloatField ("Step X", _target.StepX, 10f);
 			_target.StepY = gui.EzFloatField ("Step Y", _target.StepY, 10f);
 		}
+		_target.HatLine = gui.EzObjectField("Hat Line", _target.HatLine, 10f) as LineMesh;
+		if (_target.HasHat) {
+			using (gui.Horizontal ()) {
+					gui.LookLikeControls(40f,10f);
+					_target.StartPad = gui.EzFloatField("Pad In", _target.StartPad, 10f);
+					_target.EndPad = gui.EzFloatField ("Pad Out", _target.EndPad, 10f);
+			}
+		}
 		_target.MarkerTexts = gui.EzObjectArray ("Marker Texts", _target.MarkerTexts, ref _newMarker, ref _showMarker);
 
-		//base.OnInspectorGUI();
 		if (gui.EzButton("Update & Draw"))
 			_target.CreateLines();
 	}

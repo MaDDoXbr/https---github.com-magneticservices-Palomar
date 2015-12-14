@@ -1,48 +1,196 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
+﻿using DG.Tweening;
 using System.Collections;
-using DG.Tweening;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class LineGraph : MonoBehaviour
 {
-	public TextAsset XmlAsset;
-	public LineGraphParser Parser; 
+	private SceneData _sceneData;
+	public SceneData ScnData {
+		get {
+			if (_sceneData == null)
+				_sceneData = Resources.Load<SceneData>("SceneData");
+			return _sceneData;
+		}
+	}
+	public LineGraphParser Parser = new LineGraphParser(); 
 	public TextWipeData[] Subtitles;
 	public LineWipeData[] LineWipes;
 	public RulerWipeData[] RulerWipes;
 	public BGWipeData BGWipe;
 	public Transform Pivot;
 	[HideInInspector]public RotationData Rot;
-
-	public void Awake ()
+	[HideInInspector]public string XmlPath;
+	public bool LocalFile = true;
+	private SceneManager _scnManager;
+	public SceneManager ScnManager
 	{
+		get { return _scnManager; }
+	}
+	private bool _showDebug = true;
+	public bool ShowDebug
+	{
+		get
+		{
+			if (ScnManager)
+				return (ScnManager.ShowDebug);
+			return _showDebug;
+		}
+	}
+	[SerializeField]private Renderer[] _renderers;
+	[SerializeField]private Canvas _canvas;
+
+	public void Awake () 
+	{
+		_canvas = FindObjectOfType<Canvas>();
+		_renderers = FindObjectsOfType<Renderer>();
+		_scnManager = FindObjectOfType<SceneManager> ();
 		DOTween.Init();
 	}
-	
+
 	public void Start () 
 	{
-		WipeSubtitles();
-		WipeLines();
-		WipeRulers();
-		WipeBG();
-		Pivot.rotation = Quaternion.Euler(Rot.StartRotation);
-		Pivot.DORotate (Rot.EndRotation, Rot.Duration).SetEase (Rot.EaseType);
+		ImportXML(1);
 	}
 
-	public void ImportXML() {
-		Parser = LineGraphParser.Load(XmlAsset);
+	public void OnGUI() 
+	{
+		if (!ShowDebug)
+			return;
+		GUILayout.Label (XmlPath);		
+	}
 
-        Subtitles[0].FinalText = Parser.Subtitle1.Text;
-        Subtitles[1].FinalText = Parser.Subtitle2.Text;
-        Subtitles[2].FinalText = Parser.Subtitle3.Text;
+	public void ImportXML(int idx) 
+	{
+		XmlPath = ScnData.GetImportPath(idx, GraphType.Line, LocalFile);
+		StartCoroutine (ImportFile (XmlPath));
+	}
 
-        RulerWipes[0].Ruler.StartPad = Parser.HorizontalRuler.PadIn;
-        RulerWipes[0].Ruler.EndPad = Parser.HorizontalRuler.PadOut;
+	public IEnumerator ImportFile (string path) 
+	{
+		Tools.EnableRenderers (false, _renderers, _canvas);
+		var www = new WWW (path);
+		while (!www.isDone)
+			yield return null;
+		Parser = LineGraphParser.Load (www);
+		FeedXMLdata ();
+		Tools.EnableRenderers (true, _renderers, _canvas);
+		if (Application.isPlaying)
+			PlayMotion();
+		else {
+			var lineMeshes = FindObjectsOfType<LineMesh>();
+			foreach (var lineMesh in lineMeshes) {
+				lineMesh.WipeAmount = 1f;
+			}
+		}
+	}
 
-        RulerWipes[1].Ruler.StartPad = Parser.VerticalRuler.PadIn;
-        RulerWipes[1].Ruler.EndPad = Parser.VerticalRuler.PadOut;
+	private void FeedXMLdata()
+	{
+		if (Parser == null){
+			Debug.LogWarning("Parser creation error - is the URL Path correct?");
+			return;
+		}
+		Subtitles[0].AssignTextProperties (Parser.Subtitle1);
+		Subtitles[1].AssignTextProperties (Parser.Subtitle2);
+		Subtitles[2].AssignTextProperties (Parser.Subtitle3);
+
+		Rot.Duration = Parser.Rotation.Duration;
+		Rot.EaseType = Parser.Rotation.EaseType.ToEaseType();
+		Rot.StartRotation = Parser.Rotation.In.ToVector3();
+		Rot.EndRotation = Parser.Rotation.Out.ToVector3();
+
+		FeedRulerData();
+
+		FeedBGWipeData();
+
+		EnableDisableItems();
+
+		for (int i = 0; i < Parser.Lines.Line.Count; i++) {
+			LineWipes[i].StartTime = Parser.Lines.Line[i].StartTime;
+			LineWipes[i].Duration = Parser.Lines.Line[i].Duration;
+			LineWipes[i].EaseType = Parser.Lines.Line[i].EaseType.ToEaseType();
+
+			LineWipes[i].Line.LineColor = Parser.Lines.Line[i].Color.ToColor();
+
+			LineWipes[i].Line.Points = new Vector3[Parser.Lines.Line[i].Points.Count];
+			int z;
+			if ( int.TryParse(Parser.Lines.Line[i].z, out z) )
+				LineWipes[i].Line.Offset = new Vector3(0,0,z);
+			for (int j = 0; j < Parser.Lines.Line[i].Points.Count; j++) {
+				LineWipes[i].Line.Points[j].x = Parser.Lines.Line[i].Points[j].X;
+				LineWipes[i].Line.Points[j].y = Parser.Lines.Line[i].Points[j].Y;
+			}
+			LineWipes[i].Line.DrawLine();
+		}
+	}
+
+    public void PlayMotion()
+    {
+		DOTween.CompleteAll ();
+        WipeSubtitles();
+        WipeLines();
+        WipeRulers();
+        WipeBG();
+        Pivot.rotation = Quaternion.Euler(Rot.StartRotation);
+        Pivot.DORotate (Rot.EndRotation, Rot.Duration).
+            SetEase (Rot.EaseType);
+    }
+
+	private void EnableDisableItems() {
+		for (int j = 0; j < 10; j++) {
+			if (j < Parser.Lines.Line.Count)
+				LineWipes[j].Line.gameObject.SetActive(true);
+			else
+				LineWipes[j].Line.gameObject.SetActive(false);
+		}
+	}
+
+	private void FeedBGWipeData() {
+		BGWipe.StartTime = Parser.BGLines.StartTime;
+		BGWipe.Duration = Parser.BGLines.Duration;
+		BGWipe.EaseType = Parser.BGLines.EaseType.ToEaseType();
+		BGWipe.StepDelay = Parser.BGLines.StepDelay;
+
+		BGWipe.MultiLines.StartX = Parser.BGLines.StartX;
+		BGWipe.MultiLines.EndX = Parser.BGLines.EndX;
+		BGWipe.MultiLines.StartY = Parser.BGLines.StartY;
+		BGWipe.MultiLines.EndY = Parser.BGLines.EndY;
+
+		BGWipe.MultiLines.LineCount = Parser.BGLines.LineCount;
+		BGWipe.MultiLines.Orientation = Parser.BGLines.Orientation.ToLineOrientation();
+
+		if (Parser.BGLines.Orientation.ToLower() == "horizontal") {
+			BGWipe.MultiLines.StepY = Parser.BGLines.StepY;
+		} else if (Parser.BGLines.Orientation.ToLower() == "vertical") {
+			BGWipe.MultiLines.StepX = Parser.BGLines.StepX;
+		}
+		BGWipe.MultiLines.UpdateAndDraw();
+	}
+
+	private void FeedRulerData() {
+		if (Parser.Rulers[0].Along.ToLower() == "vertical") {
+			FeedRulerDataCommon(0);
+			RulerWipes[0].Ruler.StepX = Parser.Rulers[0].StepX;
+		} else if (Parser.Rulers[1].Along.ToLower() == "horizontal") {
+			FeedRulerDataCommon (1);
+			RulerWipes[1].Ruler.StepY = Parser.Rulers[1].StepY;
+		}
+		foreach (var rulerWipe in RulerWipes) {
+			rulerWipe.Ruler.CreateLines();
+		}
+	}
+
+	private void FeedRulerDataCommon(int idx) {
+		RulerWipes[idx].StartTime = Parser.Rulers	[idx].StartTime;
+		RulerWipes[idx].EaseType = Parser.Rulers	[idx].EaseType.ToEaseType ();
+		RulerWipes[idx].Duration = Parser.Rulers	[idx].Duration;
+
+		RulerWipes[idx].Ruler.Along = Parser.Rulers	[idx].Along.ToLineOrientation ();
+		RulerWipes[idx].Ruler.LineCount = Parser.Rulers[idx].LineCount;
+		RulerWipes[idx].Ruler.StartX = Parser.Rulers[idx].StartX;
+		RulerWipes[idx].Ruler.StartY = Parser.Rulers[idx].StartY;
+		RulerWipes[idx].Ruler.EndY = Parser.Rulers	[idx].EndY;
 	}
 
 	private void WipeLines() 
@@ -53,7 +201,7 @@ public class LineGraph : MonoBehaviour
 				continue;
 			wipe.Line.WipeAmount = 0f;
 			wipe.Line.DrawLine();
-			SeqInsert(ref linesSeq, wipe);
+			linesSeq.SeqInsert(wipe);
 		}
 	}
 
@@ -65,7 +213,7 @@ public class LineGraph : MonoBehaviour
 				continue;
 			wipe.Ruler.WipeAmount = 0f;
 			//wipe.Line.DrawLine ();
-			SeqInsert (ref rulerSeq, wipe);
+			rulerSeq.SeqInsert (wipe);
 		}
 	}
 
@@ -76,116 +224,21 @@ public class LineGraph : MonoBehaviour
 			if (subtitle == null) 
 				continue;
 			subtitle.UIText.text = "";
-			SeqInsert(ref subtitleSeq, subtitle);
+			subtitleSeq.SeqInsert(subtitle);
 		}
 	}
 
 	private void WipeBG() 
 	{
-		BGWipe.Lines.DefinePoints();
-		BGWipe.Lines.ZeroOutLinesLength();
+		BGWipe.MultiLines.DefinePoints();
+		BGWipe.MultiLines.ZeroOutLinesLength();
 		var BgSeq = DOTween.Sequence ();
 
-		for (int i = 0; i < BGWipe.Lines.VertexCount; i++) {
+		for (int i = 0; i < BGWipe.MultiLines.VertexCount; i++) {
 			// only odd vertices (line ends) must be tweened
 			if (i%2 != 0)
-				SeqInsert (ref BgSeq, BGWipe, i);
+				BgSeq.SeqInsert (BGWipe, i);
 		}
-	}
-
-	public void SeqInsert(ref Sequence seq, TextWipeData wipeData)
-	{
-		seq.Insert (
-			wipeData.StartTime,
-			wipeData.UIText.DOText(wipeData.FinalText, wipeData.Duration)
-				.SetEase(wipeData.EaseType)
-		);
-	}
-
-	public void SeqInsert (ref Sequence seq, LineWipeData wipeData)
-	{
-		seq.Insert (
-			wipeData.StartTime,
-			DOTween.To (()=>wipeData.Line.WipeAmount, 
-						x => wipeData.Line.WipeAmount = x, 
-						1f, wipeData.Duration).
-						SetEase (wipeData.EaseType)
-		);
-	}
-
-	public void SeqInsert (ref Sequence seq, RulerWipeData wipeData)
-	{
-		seq.Insert (
-			wipeData.StartTime,
-			DOTween.To (() => wipeData.Ruler.WipeAmount,
-						x => wipeData.Ruler.WipeAmount = x,
-						1f, wipeData.Duration).
-						SetEase (wipeData.EaseType)
-		);
-	}
-
-	public void SeqInsert (ref Sequence seq, BGWipeData wipeData, int i)
-	{
-		//Debug.Log(" inserted");
-		seq.Insert (
-			wipeData.StartTime + i*wipeData.StepDelay,
-			DOTween.To (() => wipeData.Lines.Points[i],
-						x => wipeData.Lines.Points[i] = x,
-						wipeData.Lines.FinalPoints[i], wipeData.Duration).
-						SetEase (wipeData.EaseType)
-						.OnUpdate(UpdateMultiLine)
-						);
-	}
-
-	public void UpdateMultiLine() {
-		BGWipe.Lines.DrawLines();
-	}
-
-	[Serializable]
-	public class TextWipeData
-	{
-		public Text UIText;
-		public String FinalText;
-		public float StartTime;
-		public float Duration = 0f;
-		public Ease EaseType;
-	}
-
-	[Serializable]
-	public class LineWipeData
-	{
-		public LineMesh Line;
-		public float StartTime;
-		public float Duration = 0f;
-		public Ease EaseType;
-	}
-
-	[Serializable]
-	public class RulerWipeData
-	{
-		public ParallelLines Ruler;
-		public float StartTime;
-		public float Duration = 0f;
-		public Ease EaseType;
-	}
-
-	[Serializable]
-	public class BGWipeData
-	{
-		public MultiLines Lines;
-		public float StartTime;
-		public float Duration = 0f;
-		public float StepDelay = 0f;
-		public Ease EaseType;
-	}
-
-	[Serializable]
-	public class RotationData
-	{
-		public Vector3 StartRotation;
-		public Vector3 EndRotation;
-		public Ease EaseType;
-		public float Duration;
 	}
 
 }

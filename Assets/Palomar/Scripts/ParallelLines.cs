@@ -1,21 +1,22 @@
-﻿using System.Runtime.InteropServices;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(LineMesh))]
 public class ParallelLines : MonoBehaviour
 {
+	// Currently doesn't support "free" wipe mode
 	public LineOrientation Along {
 		get {
 			return (Line.WipeMode == LineOrientation.Horizontal) ?
 			LineOrientation.Horizontal : LineOrientation.Vertical;
 		} 
 		set { Line.WipeMode = (value == LineOrientation.Horizontal) ?
-			LineOrientation.Horizontal : LineOrientation.Vertical; }
+			LineOrientation.Horizontal : LineOrientation.Vertical; } 
 	}
 
-	public bool Ver { get { return Along == LineOrientation.Vertical; } }
+	public bool HasHat	{ get { return HatLine != null; } }
+	public bool Vert	{ get { return Along == LineOrientation.Vertical; } }
 	private LineMesh _line;
 	public LineMesh Line {
 		get {
@@ -27,29 +28,33 @@ public class ParallelLines : MonoBehaviour
 			_line = value;
 		}
 	}
+	public LineMesh HatLine;
 
-	[HideInInspector]
-	public bool HasHat;
 	public float StartX, EndX, StartY, EndY, StepX, StepY;
-	[HideInInspector]
 	public float StartPad, EndPad;
 	public int LineCount;
 	public Text[] MarkerTexts = new Text[]{};
+	private const float HatSpeedUpFactor = 0.75f;
+
 	public float WipeAmount {
-		get { return _line.WipeAmount; }
+		get { return Line.WipeAmount; }
 		set {
 			if (Mathf.Approximately(Line.WipeAmount, value)) 
 				return;
 			Line.WipeAmount = value;
+			//Debug.Log (1 + HatSpeedUpFactor * (1 - value));
+			if (HasHat)
+				HatLine.WipeAmount = value * (1 + HatSpeedUpFactor*(1-value));
 			MarkerUpdateCheck();
 		}
 	}
 
-	/// <summary> This function expects evenly spaced, sequential 
+	/// <summary> This method expects evenly spaced, sequential 
 	/// markers. It only considers the first and last MarkerTexts </summary>
 	private void MarkerUpdateCheck() 
 	{
 		var markerCount = MarkerTexts.Length;
+		if (MarkerTexts.Length == 0) return;
 		var currVal = Mathf.Lerp(float.Parse(MarkerTexts[0].text), 
 			float.Parse(MarkerTexts[markerCount - 1].text), WipeAmount);
 			
@@ -64,38 +69,45 @@ public class ParallelLines : MonoBehaviour
 	public void CreateLines() 
 	{
 		DefinePoints();
-		Line.HasHat = HasHat;
 		Line.Continuous = false;
 		Line.DrawLine();
+		if (HasHat) {
+			HatLine.WipeAmount = Line.WipeAmount *
+				(1 + HatSpeedUpFactor * (1 - Line.WipeAmount));
+		}
+		MarkerUpdateCheck ();
 	}
 
 	private void DefinePoints() 
 	{
 		var newPoints = new List<Vector3>();
-		var start = Ver ? StartY : StartX;
-		var offset = Ver ? StepY : StepX;
+		var start = Vert ? StartY : StartX;
+		var offset = Vert ? StepY : StepX;
 
 		for (int i = 0; i < LineCount; i++) {
 			var coord = start + (offset*i);
-			newPoints.Add(Ver
+			newPoints.Add(Vert
 				? new Vector3(StartX, coord, 0f)
 				: new Vector3(coord, StartY, 0f));
-			newPoints.Add(Ver
+			newPoints.Add(Vert
 				? new Vector3(EndX, coord, 0f)
 				: new Vector3(coord, EndY, 0f));
 		}
-		if (HasHat) {
-			if (!Ver) {
-				newPoints.Add(new Vector3(StartX - StartPad, StartY, 0f));
-				newPoints.Add(new Vector3(StartX+(offset * (LineCount-1))+EndPad,
-					StartY, 0f));
-			} else {
-				newPoints.Add (new Vector3 (EndX, StartY - StartPad, 0f));
-				newPoints.Add (new Vector3 (EndX, 
-					StartY + (offset * (LineCount-1)) + EndPad, 0f));				
-			}
-		}
 		Line.Points = newPoints.ToArray();
+		if (!HasHat)
+			return;
+
+		newPoints = new List<Vector3> ();
+		if (Vert) {
+			newPoints.Add (new Vector3 (EndX, StartY - StartPad, 0f));
+			newPoints.Add (new Vector3 (EndX,
+				StartY + (offset * (LineCount - 1)) + EndPad, 0f));	
+		} else {
+			newPoints.Add (new Vector3 (StartX - StartPad, StartY, 0f));
+			newPoints.Add (new Vector3 (StartX + (offset * (LineCount - 1)) + EndPad,
+				StartY, 0f));			
+		}
+		HatLine.Points = newPoints.ToArray();
 	}
 
 }

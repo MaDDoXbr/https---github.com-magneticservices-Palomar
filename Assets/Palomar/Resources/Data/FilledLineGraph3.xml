@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Currently doesn't read BaseHeight attribute, it defaults to zero -->
+<LineGraph version="1.0" LineCount="3">
+	<subtitle1 text="SHORTER FILLED GRAPH" posX="370"/>
+	<subtitle2 text="1990 2010" posX="537"/>
+	<subtitle3 text="Source: U.S. Bureau of Labor Statistics"/>
+	<rotation 
+		in="279.6,350.28,8.9"
+		out="357.77,350.28,0"
+		duration="10"
+		easeType="OutQuint"
+	/>
+	<ruler
+		along="Vertical"
+		lineCount="10"
+		padIn="10.8" padOut="10"
+		startX="-0.65"
+		startY="8.4" endY="0"
+		stepY="10.6"
+		markerTextMin="10"
+		markerTextMax="100"
+		startTime="0" duration="4"
+		easeType="Linear"		
+	/>
+	<ruler
+		along="Horizontal"
+		lineCount="21"
+		stepCount="1" minValue="1" 
+		padIn="0" padOut="0"
+		startX="0"
+		startY="-3.3" endY="-7.3"
+		stepX="10.7"
+		markerTextMin="0"
+		markerTextMax="20"
+		startTime="0" duration="3"
+		easeType="Linear"		
+	/>	
+	<bglines 
+		startTime="0"
+		duration="1"
+		stepDelay="0.05"
+		easeType="OutCubic"
+		orientation="Horizontal"
+		startX="0" endX="21.4"
+		startY="103.7" endY="0"
+		stepY="-5.3"
+		lineCount="20"
+	/>
+	<lines>
+		<line color="47CDD3" startTime="1" duration="2"
+		easeType="OutSine">
+			<point x="0" y="20" />
+			<point x="1" y="32" />
+			<point x="2" y="17" />
+			<point x="3" y="28" />
+      <point x="4" y="41" />
+			<point x="5" y="30" />
+			<point x="6" y="26" />
+			<point x="7" y="19" />
+			<point x="8" y="34" />
+			<point x="9" y="26"/>
+      <point x="10" y="29"/>
+      <point x="11" y="17" />
+      <point x="12" y="8" />
+      <point x="13" y="2" />
+      <point x="14" y="18" />
+      <point x="15" y="20" />
+      <point x="16" y="30" />
+      <point x="17" y="32" />
+      <point x="18" y="19" />
+      <point x="19" y="24"/>
+      <point x="20" y="17"/>
+		</line>
+	</lines>
+</LineGraph>
